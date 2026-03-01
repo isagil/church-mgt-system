@@ -1,0 +1,22 @@
+{
+  "name": "ecclesia-cms-bootstrap",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "@popperjs/core": "^2.11.8",
+    "chart.js": "^4.4.7"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0",
+    "typescript": "~5.8.2"
+  }
+}
