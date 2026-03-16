@@ -48,6 +48,9 @@
                     <a class="nav-link" href="/media.html"><i class="bi bi-tv"></i>Media</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/website.html"><i class="bi bi-globe"></i>Website</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/settings.html"><i class="bi bi-gear"></i>Settings</a>
                 </li>
             </ul>
@@ -106,7 +109,47 @@
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-secondary"><i class="bi bi-calendar me-2"></i>Last 30 Days</button>
-                        <button class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>New Record</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickActionModal"><i class="bi bi-plus-lg me-2"></i>New Record</button>
+                    </div>
+                </div>
+
+                <!-- Quick Action Modal -->
+                <div class="modal fade" id="quickActionModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title fw-bold">Quick Actions</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <a href="/finance.html" class="card text-center p-3 text-decoration-none hover-scale">
+                                            <i class="bi bi-wallet2 fs-2 mb-2 text-white"></i>
+                                            <span class="small fw-bold text-white">Add Income</span>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="/partnership.html" class="card text-center p-3 text-decoration-none hover-scale">
+                                            <i class="bi bi-person-plus fs-2 mb-2 text-white"></i>
+                                            <span class="small fw-bold text-white">New Partner</span>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="/testimonies.html" class="card text-center p-3 text-decoration-none hover-scale">
+                                            <i class="bi bi-chat-quote fs-2 mb-2 text-white"></i>
+                                            <span class="small fw-bold text-white">Testimony</span>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="/baptism.html" class="card text-center p-3 text-decoration-none hover-scale">
+                                            <i class="bi bi-droplet fs-2 mb-2 text-white"></i>
+                                            <span class="small fw-bold text-white">Baptism</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -126,10 +169,10 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="stat-card">
-                                <i class="bi bi-currency-dollar stat-icon"></i>
+                                <i class="bi bi-cash-stack stat-icon"></i>
                                 <div>
                                     <p>Total Tithes</p>
-                                    <h3>$45,230</h3>
+                                    <h3 data-amount="45230">$45,230</h3>
                                 </div>
                             </div>
                         </div>
@@ -140,7 +183,7 @@
                                 <i class="bi bi-graph-up stat-icon"></i>
                                 <div>
                                     <p>Offerings</p>
-                                    <h3>$12,840</h3>
+                                    <h3 data-amount="12840">$12,840</h3>
                                 </div>
                             </div>
                         </div>
@@ -151,7 +194,7 @@
                                 <i class="bi bi-calendar-check stat-icon"></i>
                                 <div>
                                     <p>Expenditures</p>
-                                    <h3>$8,420</h3>
+                                    <h3 data-amount="8420">$8,420</h3>
                                 </div>
                             </div>
                         </div>
@@ -211,38 +254,38 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="bg-white bg-opacity-10 text-white rounded-circle p-2 me-2 small fw-bold">SJ</div>
+                                                    <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">SJ</div>
                                                     <span>Sarah Johnson</span>
                                                 </div>
                                             </td>
                                             <td>Tithe</td>
-                                            <td class="fw-bold">$500</td>
+                                            <td class="fw-bold" data-amount="500">$500</td>
                                             <td class="text-muted">2 mins ago</td>
-                                            <td><span class="badge bg-primary bg-opacity-10 text-white">Completed</span></td>
+                                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Completed</span></td>
                                         </tr>
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="bg-white bg-opacity-10 text-white rounded-circle p-2 me-2 small fw-bold">MB</div>
+                                                    <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">MB</div>
                                                     <span>Michael Brown</span>
                                                 </div>
                                             </td>
                                             <td>Partnership</td>
                                             <td class="fw-bold">New Partner</td>
                                             <td class="text-muted">15 mins ago</td>
-                                            <td><span class="badge bg-white bg-opacity-10 text-white">Pending</span></td>
+                                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary">Pending</span></td>
                                         </tr>
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="bg-white bg-opacity-10 text-white rounded-circle p-2 me-2 small fw-bold">DW</div>
+                                                    <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">DW</div>
                                                     <span>David Wilson</span>
                                                 </div>
                                             </td>
                                             <td>Testimony</td>
                                             <td class="fw-bold">New Submission</td>
                                             <td class="text-muted">1 hour ago</td>
-                                            <td><span class="badge bg-white bg-opacity-10 text-white">Review</span></td>
+                                            <td><span class="badge bg-info bg-opacity-10 text-info">Review</span></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -250,24 +293,36 @@
                         </div>
                     </div>
                     <div class="col-lg-4">
-                        <div class="card">
-                            <div class="card-header">System Notifications</div>
-                            <div class="card-body">
-                                <div class="d-flex gap-3 mb-3">
-                                    <div class="text-white"><i class="bi bi-check-circle-fill"></i></div>
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold mb-0">Website Status</h5>
+                                <span class="badge bg-success">Live</span>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle me-3">
+                                        <i class="bi bi-globe fs-4"></i>
+                                    </div>
                                     <div>
-                                        <p class="mb-0 fw-bold small">Backup Successful</p>
-                                        <p class="text-muted small mb-0">Database backup completed at 02:00 AM.</p>
+                                        <h6 class="mb-1 fw-bold">pmcc.org</h6>
+                                        <p class="text-muted small mb-0">Last updated: 2 hours ago</p>
                                     </div>
                                 </div>
-                                <div class="d-flex gap-3 mb-3">
-                                    <div class="text-white"><i class="bi bi-clock-fill"></i></div>
-                                    <div>
-                                        <p class="mb-0 fw-bold small">Pending Approvals</p>
-                                        <p class="text-muted small mb-0">5 new baptism requests waiting review.</p>
+                                <div class="list-group list-group-flush small">
+                                    <div class="list-group-item px-0 py-2 border-0 d-flex justify-content-between">
+                                        <span class="text-muted">New Partnerships</span>
+                                        <span class="fw-bold">12</span>
+                                    </div>
+                                    <div class="list-group-item px-0 py-2 border-0 d-flex justify-content-between">
+                                        <span class="text-muted">Testimonies Shared</span>
+                                        <span class="fw-bold">5</span>
+                                    </div>
+                                    <div class="list-group-item px-0 py-2 border-0 d-flex justify-content-between">
+                                        <span class="text-muted">Baptism Apps</span>
+                                        <span class="fw-bold">3</span>
                                     </div>
                                 </div>
-                                <button class="btn btn-light w-100 btn-sm">View All Notifications</button>
+                                <a href="/website.html" class="btn btn-outline-primary btn-sm w-100 mt-4">Manage Website</a>
                             </div>
                         </div>
                     </div>

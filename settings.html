@@ -44,6 +44,9 @@
                     <a class="nav-link" href="/media.html"><i class="bi bi-tv"></i>Media</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/website.html"><i class="bi bi-globe"></i>Website</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link active" href="/settings.html"><i class="bi bi-gear"></i>Settings</a>
                 </li>
             </ul>
@@ -107,95 +110,499 @@
                     <div class="col-lg-3">
                         <div class="card border-0 shadow-sm">
                             <div class="list-group list-group-flush">
-                                <a href="#" class="list-group-item list-group-item-action active border-0 p-3"><i class="bi bi-church me-2"></i>Church Profile</a>
-                                <a href="#" class="list-group-item list-group-item-action border-0 p-3"><i class="bi bi-shield-lock me-2"></i>Roles & Permissions</a>
-                                <a href="#" class="list-group-item list-group-item-action border-0 p-3"><i class="bi bi-bell me-2"></i>Notifications</a>
-                                <a href="#" class="list-group-item list-group-item-action border-0 p-3"><i class="bi bi-cloud-arrow-up me-2"></i>Backup & Restore</a>
-                                <a href="#" class="list-group-item list-group-item-action border-0 p-3 text-white"><i class="bi bi-trash me-2"></i>Danger Zone</a>
+                                <a href="#" class="list-group-item list-group-item-action active border-0 p-3" data-section="profile"><i class="bi bi-church me-2"></i>Church Profile</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3" data-section="users"><i class="bi bi-people me-2"></i>User Management</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3" data-section="roles"><i class="bi bi-shield-lock me-2"></i>Roles & Permissions</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3" data-section="notifications"><i class="bi bi-bell me-2"></i>Notifications</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3" data-section="backup"><i class="bi bi-cloud-arrow-up me-2"></i>Backup & Restore</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3" data-section="website"><i class="bi bi-globe me-2"></i>Website Settings</a>
+                                <a href="#" class="list-group-item list-group-item-action border-0 p-3 text-white" data-section="danger"><i class="bi bi-trash me-2"></i>Danger Zone</a>
                             </div>
                         </div>
                     </div>
 
                     <!-- Settings Content -->
                     <div class="col-lg-9">
-                        <div class="card border-0 shadow-sm mb-4">
-                            <div class="card-header bg-white border-0 p-4 pb-0">
-                                <h5 class="fw-bold mb-0">Church Profile</h5>
-                                <p class="text-muted small">Update your church's basic information.</p>
-                            </div>
-                            <div class="card-body p-4 pt-0">
-                                <form>
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-md-12 text-center mb-3">
-                                            <div class="position-relative d-inline-block">
-                                                <img src="https://picsum.photos/seed/church/120/120" class="rounded-circle border p-1" width="120" height="120" alt="Church Logo">
-                                                <button type="button" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 shadow-sm"><i class="bi bi-camera"></i></button>
+                        <!-- Church Profile Section -->
+                        <div id="section-profile" class="settings-section">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0">
+                                    <h5 class="fw-bold mb-0">Church Profile</h5>
+                                    <p class="text-muted small">Update your church's basic information.</p>
+                                </div>
+                                <div class="card-body p-4 pt-0">
+                                    <form>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-12 text-center mb-3">
+                                                <div class="position-relative d-inline-block">
+                                                    <img src="https://picsum.photos/seed/church/120/120" class="rounded-circle border p-1" width="120" height="120" alt="Church Logo">
+                                                    <button type="button" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 shadow-sm"><i class="bi bi-camera"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-bold">Church Name</label>
+                                                <input type="text" class="form-control" value="PMCC Main Branch">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-bold">Email Address</label>
+                                                <input type="email" class="form-control" value="contact@pmcc.org">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-bold">Phone Number</label>
+                                                <input type="tel" class="form-control" value="+1 234 567 890">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-bold">Website</label>
+                                                <input type="url" class="form-control" value="https://pmcc.org">
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label small fw-bold">Address</label>
+                                                <textarea class="form-control" rows="2">123 Grace Avenue, Faith City, FC 45678</textarea>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label small fw-bold">Church Name</label>
-                                            <input type="text" class="form-control" value="PMCC Main Branch">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-light">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label small fw-bold">Email Address</label>
-                                            <input type="email" class="form-control" value="contact@ecclesia.org">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label small fw-bold">Phone Number</label>
-                                            <input type="tel" class="form-control" value="+1 234 567 890">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label small fw-bold">Website</label>
-                                            <input type="url" class="form-control" value="https://ecclesia.org">
-                                        </div>
-                                        <div class="col-md-12">
-                                            <label class="form-label small fw-bold">Address</label>
-                                            <textarea class="form-control" rows="2">123 Grace Avenue, Faith City, FC 45678</textarea>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <button type="button" class="btn btn-light">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-white border-0 p-4 pb-0">
-                                <h5 class="fw-bold mb-0">System Configuration</h5>
-                                <p class="text-muted small">Manage system-wide preferences.</p>
+                        <!-- User Management Section -->
+                        <div id="section-users" class="settings-section d-none">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="fw-bold mb-0">User Management</h5>
+                                        <p class="text-muted small">Manage system users and access levels.</p>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="bi bi-person-plus me-2"></i>Add User</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="usersTable">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="border-0">User</th>
+                                                <th class="border-0">Role</th>
+                                                <th class="border-0">Access</th>
+                                                <th class="border-0">Status</th>
+                                                <th class="border-0">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="https://picsum.photos/seed/admin/40/40" class="rounded-circle me-3" width="32" height="32">
+                                                        <div>
+                                                            <div class="fw-bold">Admin User</div>
+                                                            <div class="small text-muted">admin@pmcc.org</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><span class="badge bg-primary bg-opacity-10 text-primary">Main Admin</span></td>
+                                                <td>Level 1</td>
+                                                <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-light border-0 edit-user-btn"><i class="bi bi-pencil"></i></button>
+                                                    <button class="btn btn-sm btn-light border-0 text-danger lock-user-btn"><i class="bi bi-shield-lock"></i></button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="https://picsum.photos/seed/user1/40/40" class="rounded-circle me-3" width="32" height="32">
+                                                        <div>
+                                                            <div class="fw-bold">Jane Smith</div>
+                                                            <div class="small text-muted">jane.smith@pmcc.org</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><span class="badge bg-info bg-opacity-10 text-info">Finance Manager</span></td>
+                                                <td>Level 2</td>
+                                                <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-light border-0 edit-user-btn"><i class="bi bi-pencil"></i></button>
+                                                    <button class="btn btn-sm btn-light border-0 text-danger lock-user-btn"><i class="bi bi-shield-lock"></i></button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div class="card-body p-4 pt-0">
-                                <div class="list-group list-group-flush">
-                                    <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-bold mb-1">Email Notifications</h6>
-                                            <p class="text-muted small mb-0">Receive automated email reports for finances.</p>
+                        </div>
+
+                        <!-- Roles & Permissions Section -->
+                        <div id="section-roles" class="settings-section d-none">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0">
+                                    <h5 class="fw-bold mb-0">Roles & Permissions</h5>
+                                    <p class="text-muted small">Define what each access level can do.</p>
+                                </div>
+                                <div class="card-body p-4 pt-0">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="bg-primary bg-opacity-10 p-2 rounded d-inline-block mb-2">
+                                                    <i class="bi bi-shield-fill-check text-primary fs-4"></i>
+                                                </div>
+                                                <h6 class="fw-bold">Level 1</h6>
+                                                <p class="small text-muted mb-0">Full Administrative Access</p>
+                                            </div>
                                         </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" checked>
+                                        <div class="col-md-4">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="bg-info bg-opacity-10 p-2 rounded d-inline-block mb-2">
+                                                    <i class="bi bi-shield-shaded text-info fs-4"></i>
+                                                </div>
+                                                <h6 class="fw-bold">Level 2</h6>
+                                                <p class="small text-muted mb-0">Departmental Access</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="bg-secondary bg-opacity-10 p-2 rounded d-inline-block mb-2">
+                                                    <i class="bi bi-shield-lock text-secondary fs-4"></i>
+                                                </div>
+                                                <h6 class="fw-bold">Level 3</h6>
+                                                <p class="small text-muted mb-0">Read-Only Access</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-bold mb-1">Two-Factor Authentication</h6>
-                                            <p class="text-muted small mb-0">Add an extra layer of security to your account.</p>
+                                    <button class="btn btn-outline-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#rolesModal">View Permissions Matrix</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications Section -->
+                        <div id="section-notifications" class="settings-section d-none">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0">
+                                    <h5 class="fw-bold mb-0">System Configuration</h5>
+                                    <p class="text-muted small">Manage system-wide preferences.</p>
+                                </div>
+                                <div class="card-body p-4 pt-0">
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Email Notifications</h6>
+                                                <p class="text-muted small mb-0">Receive automated email reports for finances.</p>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" checked>
+                                            </div>
                                         </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox">
+                                        <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Two-Factor Authentication</h6>
+                                                <p class="text-muted small mb-0">Add an extra layer of security to your account.</p>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-bold mb-1">Public Testimony Sharing</h6>
-                                            <p class="text-muted small mb-0">Allow approved testimonies to be shared on social media.</p>
-                                        </div>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" checked>
+                                        <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Public Testimony Sharing</h6>
+                                                <p class="text-muted small mb-0">Allow approved testimonies to be shared on social media.</p>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" checked>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Backup Section -->
+                        <div id="section-backup" class="settings-section d-none">
+                            <!-- ... existing content ... -->
+                        </div>
+
+                        <!-- Website Settings Section -->
+                        <div id="section-website" class="settings-section d-none">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0">
+                                    <h5 class="fw-bold mb-0">Website Integration Settings</h5>
+                                    <p class="text-muted small">Configure how the public website interacts with this system.</p>
+                                </div>
+                                <div class="card-body p-4 pt-0">
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold">Public API Key</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="cmsApiKey" value="%VITE_CMS_API_KEY%" readonly>
+                                            <button class="btn btn-outline-secondary" id="copyApiKeyBtn"><i class="bi bi-copy"></i></button>
+                                        </div>
+                                        <p class="text-muted x-small mt-1">Use this key to authenticate form submissions from your public website.</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold">Webhook URL</label>
+                                        <input type="url" class="form-control" id="cmsWebhookUrl" value="%VITE_CMS_WEBHOOK_URL%">
+                                        <p class="text-muted x-small mt-1">Notifications will be sent to this URL when a form is processed.</p>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label small fw-bold">Auto-Approve Testimonies</label>
+                                        <p class="text-muted x-small">If enabled, testimonies submitted via website will be visible immediately (not recommended).</p>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label small fw-bold">Email Confirmation</label>
+                                        <p class="text-muted x-small">Send a confirmation email to the user after they submit a form.</p>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" id="saveWebsiteSettingsBtn" class="btn btn-primary">Save Website Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone Section -->
+                        <div id="section-danger" class="settings-section d-none">
+                            <div class="card border-danger border-opacity-25 shadow-sm mb-4">
+                                <div class="card-header bg-white border-0 p-4 pb-0">
+                                    <h5 class="fw-bold text-danger mb-0">Danger Zone</h5>
+                                    <p class="text-muted small">Irreversible actions for system maintenance.</p>
+                                </div>
+                                <div class="card-body p-4 pt-0">
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Clear Audit Logs</h6>
+                                                <p class="text-muted small mb-0">Permanently delete all system activity logs older than 1 year.</p>
+                                            </div>
+                                            <button class="btn btn-outline-danger btn-sm">Clear Logs</button>
+                                        </div>
+                                        <div class="list-group-item border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Factory Reset System</h6>
+                                                <p class="text-muted small mb-0">Wipe all data and reset system to initial state.</p>
+                                            </div>
+                                            <button class="btn btn-danger btn-sm">Reset System</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modals (Moved from users.html) -->
+            <!-- Add User Modal -->
+            <div class="modal fade" id="addUserModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Add New User</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="addUserForm">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Full Name</label>
+                                        <input type="text" name="fullName" class="form-control" placeholder="Enter full name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Email Address</label>
+                                        <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Role</label>
+                                        <select name="role" class="form-select" required>
+                                            <option value="">Select Role</option>
+                                            <option>Main Admin</option>
+                                            <option>Finance Manager</option>
+                                            <option>Media Coordinator</option>
+                                            <option>Partnership Lead</option>
+                                            <option>Secretary</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Access Level</label>
+                                        <select name="accessLevel" class="form-select" required>
+                                            <option value="">Select Level</option>
+                                            <option>Level 1</option>
+                                            <option>Level 2</option>
+                                            <option>Level 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Department</label>
+                                    <select name="department" class="form-select">
+                                        <option>Administration</option>
+                                        <option>Finance</option>
+                                        <option>Media</option>
+                                        <option>Partnership</option>
+                                        <option>Evangelism</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Initial Password</label>
+                                    <input type="password" name="password" class="form-control" placeholder="Create temporary password" required>
+                                    <div class="form-text">User will be prompted to change this on first login.</div>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Create User Account</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit User Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Edit User Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="editUserForm">
+                                <input type="hidden" name="userId">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Full Name</label>
+                                        <input type="text" name="fullName" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Email Address</label>
+                                        <input type="email" name="email" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Role</label>
+                                        <select name="role" class="form-select" required>
+                                            <option>Main Admin</option>
+                                            <option>Finance Manager</option>
+                                            <option>Media Coordinator</option>
+                                            <option>Partnership Lead</option>
+                                            <option>Secretary</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Access Level</label>
+                                        <select name="accessLevel" class="form-select" required>
+                                            <option>Level 1</option>
+                                            <option>Level 2</option>
+                                            <option>Level 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Status</label>
+                                    <select name="status" class="form-select">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles/Permissions Modal -->
+            <div class="modal fade" id="rolesModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">System Permissions Matrix</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th rowspan="2" class="align-middle">Module / Feature</th>
+                                            <th colspan="2" class="text-center">Level 1 (Admin)</th>
+                                            <th colspan="2" class="text-center">Level 2 (Staff)</th>
+                                            <th colspan="2" class="text-center">Level 3 (Guest)</th>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-center small py-1">View</th>
+                                            <th class="text-center small py-1">Edit</th>
+                                            <th class="text-center small py-1">View</th>
+                                            <th class="text-center small py-1">Edit</th>
+                                            <th class="text-center small py-1">View</th>
+                                            <th class="text-center small py-1">Edit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Dashboard Stats</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Finance Management</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>User Management</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Media Content Control</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Partnership Records</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Website Management</td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input" checked></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                            <td class="text-center"><input type="checkbox" class="form-check-input"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button class="btn btn-primary" data-bs-dismiss="modal">Save Permissions</button>
                             </div>
                         </div>
                     </div>

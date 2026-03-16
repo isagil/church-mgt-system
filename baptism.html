@@ -44,6 +44,9 @@
                     <a class="nav-link" href="/media.html"><i class="bi bi-tv"></i>Media</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/website.html"><i class="bi bi-globe"></i>Website</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/settings.html"><i class="bi bi-gear"></i>Settings</a>
                 </li>
             </ul>
@@ -101,25 +104,39 @@
                         <p class="text-muted">Manage baptism requests, approvals, and certificates.</p>
                     </div>
                     <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" id="importBaptismCsv"><i class="bi bi-file-earmark-arrow-up me-2"></i>Import CSV</button>
+                        <input type="file" id="baptismCsvInput" class="d-none" accept=".csv">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#baptismRequestModal"><i class="bi bi-plus-lg me-2"></i>New Baptism Request</button>
                     </div>
                 </div>
 
-                <!-- Tabs -->
-                <ul class="nav nav-tabs mb-4 border-0">
-                    <li class="nav-item">
-                        <a class="nav-link active border-0 border-bottom border-primary border-3 fw-bold" href="#">Records</a>
+                <!-- Tab Select (Mobile) -->
+                <div class="d-md-none mb-4">
+                    <select class="form-select fw-bold border-primary" id="baptismTabSelect">
+                        <option value="#records">Records</option>
+                        <option value="#requests">Requests</option>
+                        <option value="#certificates">Certificates</option>
+                    </select>
+                </div>
+
+                <!-- Tabs (Desktop) -->
+                <ul class="nav nav-tabs mb-4 border-0 d-none d-md-flex" id="baptismTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active border-0 border-bottom border-primary border-3 fw-bold bg-transparent" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab">Records</button>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link border-0 text-muted" href="#">Requests</a>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link border-0 text-muted bg-transparent" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">Requests</button>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link border-0 text-muted" href="#">Certificates</a>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link border-0 text-muted bg-transparent" id="certificates-tab" data-bs-toggle="tab" data-bs-target="#certificates" type="button" role="tab">Certificates</button>
                     </li>
                 </ul>
 
-                <!-- Records Table -->
-                <div class="card mb-4">
+                <div class="tab-content" id="baptismTabContent">
+                    <!-- Records Tab -->
+                    <div class="tab-pane fade show active" id="records" role="tabpanel">
+                        <!-- Records Table -->
+                        <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>Baptism Records</span>
                         <div class="d-flex gap-2">
@@ -146,14 +163,14 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-white bg-opacity-10 text-white rounded-circle p-2 me-2 small fw-bold">JS</div>
+                                            <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">JS</div>
                                             <span class="fw-bold">John Smith</span>
                                         </div>
                                     </td>
                                     <td class="text-muted small">2024-05-20</td>
                                     <td class="text-muted small">Rev. Samuel Ade</td>
                                     <td class="text-muted small">Main Sanctuary</td>
-                                    <td><span class="badge bg-primary bg-opacity-10 text-white">Approved</span></td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary">Approved</span></td>
                                     <td>
                                         <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
                                         <button class="btn btn-sm btn-light border-0"><i class="bi bi-file-earmark-text"></i></button>
@@ -163,43 +180,109 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-white bg-opacity-10 text-white rounded-circle p-2 me-2 small fw-bold">AC</div>
+                                            <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">AC</div>
                                             <span class="fw-bold">Alice Cooper</span>
                                         </div>
                                     </td>
                                     <td class="text-muted small">2024-05-19</td>
                                     <td class="text-muted small">Pastor Jane Doe</td>
                                     <td class="text-muted small">River Side</td>
-                                    <td><span class="badge bg-white bg-opacity-10 text-white">Pending</span></td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary">Pending</span></td>
                                     <td>
                                         <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
-                                        <button class="btn btn-sm btn-primary bg-opacity-10 text-white border-0"><i class="bi bi-check-circle"></i></button>
+                                        <button class="btn btn-sm btn-primary bg-opacity-10 text-primary border-0"><i class="bi bi-check-circle"></i></button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
+                        </div>
+                    </div>
 
-                <!-- Certificate Grid Preview -->
-                <div class="row g-4 mb-4">
-                    <div class="col-md-4">
-                        <div class="card border-top border-primary border-4">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-4">
-                                    <div class="bg-white bg-opacity-10 text-white p-3 rounded-lg fs-4"><i class="bi bi-file-earmark-text"></i></div>
-                                    <button class="btn btn-light btn-sm border-0"><i class="bi bi-three-dots-vertical"></i></button>
+                    <!-- Requests Tab -->
+                    <div class="tab-pane fade" id="requests" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">Pending Baptism Requests</div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Candidate</th>
+                                            <th>Proposed Date</th>
+                                            <th>Type</th>
+                                            <th>Reason</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">DW</div>
+                                                    <span class="fw-bold">David Wilson</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-muted small">2024-06-15</td>
+                                            <td>Immersion</td>
+                                            <td class="text-muted small">Wants to dedicate life to Christ...</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-success"><i class="bi bi-check-circle me-1"></i>Approve</button>
+                                                <button class="btn btn-sm btn-danger"><i class="bi bi-x-circle me-1"></i>Decline</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certificates Tab -->
+                    <div class="tab-pane fade" id="certificates" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Generated Certificates</h5>
+                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-printer me-2"></i>Print All</button>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="card border-top border-primary border-4">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-4">
+                                            <div class="bg-primary text-white p-3 rounded-lg fs-4"><i class="bi bi-file-earmark-text"></i></div>
+                                            <button class="btn btn-light btn-sm border-0"><i class="bi bi-three-dots-vertical"></i></button>
+                                        </div>
+                                        <h5 class="fw-bold mb-1">Baptism Certificate</h5>
+                                        <p class="text-muted small mb-4">Certificate ID: #BAP-2024-1</p>
+                                        <div class="mb-4">
+                                            <p class="text-muted small mb-2"><i class="bi bi-person me-2"></i>John Smith</p>
+                                            <p class="text-muted small mb-2"><i class="bi bi-calendar me-2"></i>2024-05-20</p>
+                                            <p class="text-muted small mb-0"><i class="bi bi-geo-alt me-2"></i>Main Sanctuary</p>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-primary flex-grow-1">View</button>
+                                            <button class="btn btn-sm btn-outline-primary flex-grow-1">Download</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h5 class="fw-bold mb-1">Baptism Certificate</h5>
-                                <p class="text-muted small mb-4">Certificate ID: #BAP-2024-1</p>
-                                <div class="mb-4">
-                                    <p class="text-muted small mb-2"><i class="bi bi-person me-2"></i>John Smith</p>
-                                    <p class="text-muted small mb-2"><i class="bi bi-calendar me-2"></i>2024-05-20</p>
-                                    <p class="text-muted small mb-0"><i class="bi bi-geo-alt me-2"></i>Main Sanctuary</p>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary flex-grow-1">View</button>
-                                    <button class="btn btn-sm btn-outline-primary flex-grow-1">Download</button>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-top border-primary border-4">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-4">
+                                            <div class="bg-primary text-white p-3 rounded-lg fs-4"><i class="bi bi-file-earmark-text"></i></div>
+                                            <button class="btn btn-light btn-sm border-0"><i class="bi bi-three-dots-vertical"></i></button>
+                                        </div>
+                                        <h5 class="fw-bold mb-1">Baptism Certificate</h5>
+                                        <p class="text-muted small mb-4">Certificate ID: #BAP-2024-2</p>
+                                        <div class="mb-4">
+                                            <p class="text-muted small mb-2"><i class="bi bi-person me-2"></i>Alice Cooper</p>
+                                            <p class="text-muted small mb-2"><i class="bi bi-calendar me-2"></i>2024-05-19</p>
+                                            <p class="text-muted small mb-0"><i class="bi bi-geo-alt me-2"></i>River Side</p>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-primary flex-grow-1">View</button>
+                                            <button class="btn btn-sm btn-outline-primary flex-grow-1">Download</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -243,13 +326,13 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label small fw-bold">Reason for Baptism</label>
-                                    <textarea class="form-control" rows="3" placeholder="Briefly explain..."></textarea>
+                                    <textarea class="form-control" rows="3" placeholder="Briefly explain..." required></textarea>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Submit Request</button>
                                 </div>
                             </form>
-                        </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary">Submit Request</button>
                         </div>
                     </div>
                 </div>
@@ -264,6 +347,29 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab Select Sync
+            const tabSelect = document.getElementById('baptismTabSelect');
+            if (tabSelect) {
+                tabSelect.addEventListener('change', function(e) {
+                    const targetId = e.target.value;
+                    const tabTrigger = document.querySelector(`button[data-bs-target="${targetId}"]`);
+                    if (tabTrigger) {
+                        bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+                    }
+                });
+
+                // Sync select when tab is changed via buttons
+                const tabTriggers = document.querySelectorAll('button[data-bs-toggle="tab"]');
+                tabTriggers.forEach(trigger => {
+                    trigger.addEventListener('shown.bs.tab', function(e) {
+                        tabSelect.value = e.target.getAttribute('data-bs-target');
+                    });
+                });
+            }
+        });
+    </script>
     <script type="module" src="/assets/js/main.js"></script>
 </body>
 </html>

@@ -23,6 +23,8 @@ export default defineConfig(() => {
           baptism: path.resolve(__dirname, 'baptism.html'),
           media: path.resolve(__dirname, 'media.html'),
           settings: path.resolve(__dirname, 'settings.html'),
+          website: path.resolve(__dirname, 'website.html'),
+          login: path.resolve(__dirname, 'login.html'),
         },
       },
     },
