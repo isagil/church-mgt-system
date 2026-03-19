@@ -34,6 +34,14 @@ This application uses a MySQL backend. To set it up:
     ```
 2.  **Run Schema**: Use the following SQL to create the initial tables:
     ```sql
+    CREATE TABLE users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(50) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      role ENUM('Admin', 'Pastor', 'Finance', 'Media') DEFAULT 'Admin',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE members (
       id INT AUTO_INCREMENT PRIMARY KEY,
       full_name VARCHAR(255) NOT NULL,

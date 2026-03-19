@@ -19,13 +19,20 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authenticating...';
             
-            // Simulate network delay
-            setTimeout(() => {
-                // Hardcoded credentials as requested
-                if (username === 'samie' && password === 'timeisgood') {
+            // Call backend API
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     // Success
                     localStorage.setItem('pmcc_auth', 'true');
-                    localStorage.setItem('pmcc_user', 'samie');
+                    localStorage.setItem('pmcc_user', data.user.username);
                     
                     // Redirect to dashboard
                     window.location.href = '/index.html';
@@ -34,12 +41,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                     
-                    // Show error (using a simple alert for now, or we could add a UI element)
-                    alert('Invalid username or password. Please try again.');
+                    alert(data.message || 'Invalid username or password. Please try again.');
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
-            }, 1000);
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                alert('An error occurred during login. Please try again later.');
+            });
         });
     }
 

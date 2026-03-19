@@ -73,6 +73,28 @@ async function startServer() {
     }
   });
 
+  // API: Login
+  app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+      // Real MySQL query example:
+      // const [rows] = await pool.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
+      // if (rows.length > 0) { ... }
+
+      // For now, simulate success for the requested credentials
+      if (username === 'samie' && password === 'timeisgood') {
+        res.json({
+          success: true,
+          user: { username: 'samie', role: 'Admin' }
+        });
+      } else {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   // Example API: Get Finance Summary
   app.get('/api/finance/summary', async (req, res) => {
     try {
