@@ -1,6 +1,6 @@
 // PMCC - Main JavaScript
 import { updateAllCurrencies, formatCurrency, getCurrencySymbol } from './currency.js';
-import { logout } from './auth.js';
+import { logout, authFetch } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Auth Check
@@ -18,8 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch Dashboard Stats from API
     async function fetchDashboardStats() {
         try {
-            const response = await fetch('/api/dashboard/stats');
-            if (!response.ok) throw new Error('Failed to fetch stats');
+            const response = await authFetch('/api/dashboard/stats');
             const data = await response.json();
             
             // Update UI with real data
@@ -36,8 +35,375 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    if (window.location.pathname === '/' || window.location.pathname.includes('index.html')) {
+    // Fetch Members from API
+    async function fetchMembers() {
+        const membersTable = document.getElementById('membersTable')?.querySelector('tbody');
+        if (!membersTable) return;
+
+        try {
+            const response = await authFetch('/api/members');
+            const data = await response.json();
+            
+            membersTable.innerHTML = '';
+            data.forEach(member => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${member.full_name}</td>
+                    <td>${member.email || 'N/A'}</td>
+                    <td>${member.phone || 'N/A'}</td>
+                    <td>${new Date(member.join_date).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0 edit-member-btn" data-id="${member.id}"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger delete-member-btn" data-id="${member.id}"><i class="bi bi-trash"></i></button>
+                    </td>
+                `;
+                membersTable.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching members:', error);
+        }
+    }
+
+    // Fetch Users from API
+    async function fetchUsers() {
+        const usersTable = document.getElementById('usersTable')?.querySelector('tbody');
+        if (!usersTable) return;
+
+        try {
+            const response = await authFetch('/api/users');
+            const data = await response.json();
+            
+            usersTable.innerHTML = '';
+            data.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="https://picsum.photos/seed/${user.username}/40/40" class="rounded-circle me-3" width="32" height="32">
+                            <div>
+                                <div class="fw-bold">${user.username}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-primary bg-opacity-10 text-primary">${user.role}</span></td>
+                    <td>Full</td>
+                    <td>General</td>
+                    <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                    <td class="text-muted">${new Date(user.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0 edit-user-btn" data-id="${user.id}"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger lock-user-btn" data-id="${user.id}"><i class="bi bi-shield-lock"></i></button>
+                    </td>
+                `;
+                usersTable.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    }
+
+    // Fetch Website Settings
+    async function fetchWebsiteSettings() {
+        try {
+            const response = await authFetch('/api/website/settings');
+            const data = await response.json();
+            
+            // Update UI
+            const heroTitleInput = document.querySelector('#editWebsiteForm [name="heroTitle"]') || document.querySelector('#editWebsiteForm input[type="text"]');
+            const heroSubtitleInput = document.querySelector('#editWebsiteForm [name="heroSubtitle"]') || document.querySelector('#editWebsiteForm textarea');
+            
+            if (heroTitleInput) heroTitleInput.value = data.hero_title;
+            if (heroSubtitleInput) heroSubtitleInput.value = data.hero_subtitle || '';
+            
+            // Update display labels
+            const heroTitleLabel = document.querySelector('.list-group-item h6:contains("Hero Banner Text")')?.nextElementSibling;
+            // Note: :contains is not standard CSS, I'll use a safer way in the code
+            
+            // Update form switches
+            const formPartnership = document.getElementById('formPartnership');
+            const formTestimony = document.getElementById('formTestimony');
+            const formBaptism = document.getElementById('formBaptism');
+            
+            if (data.forms_enabled) {
+                if (formPartnership) formPartnership.checked = !!data.forms_enabled.partnership;
+                if (formTestimony) formTestimony.checked = !!data.forms_enabled.testimony;
+                if (formBaptism) formBaptism.checked = !!data.forms_enabled.baptism;
+            }
+            
+            // Update SEO/Analytics
+            const metaTitleInput = document.getElementById('metaTitle');
+            if (metaTitleInput) metaTitleInput.value = data.meta_title || '';
+            
+            const gaIdInput = document.getElementById('gaId');
+            if (gaIdInput) gaIdInput.value = data.google_analytics_id || '';
+            
+            const emailInput = document.getElementById('notificationEmail');
+            if (emailInput) emailInput.value = data.notification_email || '';
+            
+            // Update buttons
+            const primaryBtnInput = document.querySelector('#editWebsiteForm [name="primaryButtonText"]');
+            const secondaryBtnInput = document.querySelector('#editWebsiteForm [name="secondaryButtonText"]');
+            
+            if (primaryBtnInput) primaryBtnInput.value = data.primary_button_text || 'Join Us Online';
+            if (secondaryBtnInput) secondaryBtnInput.value = data.secondary_button_text || 'Request Prayer';
+
+        } catch (error) {
+            console.error('Error fetching website settings:', error);
+        }
+    }
+
+    // Fetch Website Submissions
+    async function fetchWebsiteSubmissions() {
+        const submissionsTable = document.querySelector('table.table-hover tbody');
+        if (!submissionsTable || !window.location.pathname.includes('website.html')) return;
+
+        try {
+            const response = await authFetch('/api/website/submissions');
+            const data = await response.json();
+            
+            submissionsTable.innerHTML = '';
+            data.forEach(sub => {
+                const row = document.createElement('tr');
+                const badgeClass = sub.type === 'Partnership' ? 'bg-primary' : (sub.type === 'Testimony' ? 'bg-info' : 'bg-warning');
+                const link = sub.type === 'Partnership' ? '/partnership.html' : (sub.type === 'Testimony' ? '/testimonies.html' : '/baptism.html');
+                
+                row.innerHTML = `
+                    <td><span class="badge ${badgeClass} bg-opacity-10 text-${badgeClass.replace('bg-', '')}">${sub.type}</span></td>
+                    <td class="fw-bold">${sub.name}</td>
+                    <td class="text-muted small">${new Date(sub.date).toLocaleDateString()}</td>
+                    <td><span class="badge ${sub.status === 'New' || sub.status === 'Pending' ? 'bg-warning text-dark' : 'bg-success'}">${sub.status}</span></td>
+                    <td><a href="${link}" class="btn btn-sm btn-light">Manage</a></td>
+                `;
+                submissionsTable.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching website submissions:', error);
+        }
+    }
+
+    // Fetch Finance Summary
+    async function fetchFinanceSummary() {
+        try {
+            const response = await authFetch('/api/finance/summary');
+            const data = await response.json();
+            
+            const totalIncomeEl = document.querySelector('.card h6:contains("Total Income")')?.nextElementSibling;
+            const totalExpensesEl = document.querySelector('.card h6:contains("Total Expenses")')?.nextElementSibling;
+            const netBalanceEl = document.querySelector('.card h6:contains("Net Balance")')?.nextElementSibling;
+            
+            // Safer way to find elements by text
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const h6 = card.querySelector('h6');
+                if (!h6) return;
+                const h3 = card.querySelector('h3');
+                if (!h3) return;
+                
+                if (h6.textContent.includes('Total Income')) {
+                    h3.textContent = formatCurrency(data.total_income);
+                } else if (h6.textContent.includes('Total Expenses')) {
+                    h3.textContent = formatCurrency(data.total_expenses);
+                } else if (h6.textContent.includes('Net Balance')) {
+                    h3.textContent = formatCurrency(data.net_balance);
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching finance summary:', error);
+        }
+    }
+
+    // Fetch Partnerships
+    async function fetchPartnerships() {
+        const table = document.querySelector('table.table-hover tbody');
+        if (!table || !window.location.pathname.includes('partnership.html')) return;
+
+        try {
+            const response = await authFetch('/api/partnerships');
+            const data = await response.json();
+            
+            table.innerHTML = '';
+            data.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${p.full_name}</td>
+                    <td>${p.category}</td>
+                    <td>${formatCurrency(p.amount)}</td>
+                    <td>${p.frequency}</td>
+                    <td><span class="badge ${p.status === 'Active' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${p.status === 'Active' ? 'success' : 'warning'}">${p.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-trash"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching partnerships:', error);
+        }
+    }
+
+    // Fetch Testimonies
+    async function fetchTestimonies() {
+        const table = document.querySelector('table.table-hover tbody');
+        if (!table || !window.location.pathname.includes('testimonies.html')) return;
+
+        try {
+            const response = await authFetch('/api/testimonies');
+            const data = await response.json();
+            
+            table.innerHTML = '';
+            data.forEach(t => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.full_name}</td>
+                    <td>${t.title}</td>
+                    <td>${new Date(t.date).toLocaleDateString()}</td>
+                    <td><span class="badge ${t.status === 'Approved' ? 'bg-success' : (t.status === 'Pending' ? 'bg-warning' : 'bg-danger')} bg-opacity-10 text-${t.status === 'Approved' ? 'success' : (t.status === 'Pending' ? 'warning' : 'danger')}">${t.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-success"><i class="bi bi-check-lg"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-x-lg"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching testimonies:', error);
+        }
+    }
+
+    // Fetch Baptism Requests
+    async function fetchBaptismRequests() {
+        const table = document.querySelector('table.table-hover tbody');
+        if (!table || !window.location.pathname.includes('baptism.html')) return;
+
+        try {
+            const response = await authFetch('/api/baptism-requests');
+            const data = await response.json();
+            
+            table.innerHTML = '';
+            data.forEach(r => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${r.full_name}</td>
+                    <td>${new Date(r.preferred_date).toLocaleDateString()}</td>
+                    <td>${r.location}</td>
+                    <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : (r.status === 'Pending' ? 'bg-warning' : 'bg-info')} bg-opacity-10 text-${r.status === 'Completed' ? 'success' : (r.status === 'Pending' ? 'warning' : 'info')}">${r.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-success"><i class="bi bi-check-lg"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching baptism requests:', error);
+        }
+    }
+
+    // Fetch Transactions
+    async function fetchTransactions() {
+        const transactionsTable = document.querySelector('table.table-hover tbody');
+        if (!transactionsTable || !window.location.pathname.includes('finance.html')) return;
+
+        try {
+            const response = await authFetch('/api/finance/transactions');
+            const data = await response.json();
+            
+            transactionsTable.innerHTML = '';
+            data.forEach(tx => {
+                const row = document.createElement('tr');
+                const typeClass = tx.type === 'Income' ? 'text-success' : 'text-danger';
+                const typeIcon = tx.type === 'Income' ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light rounded p-2 me-3">
+                                <i class="bi ${typeIcon} ${typeClass}"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">${tx.description}</div>
+                                <div class="text-muted x-small">${tx.category}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${new Date(tx.date).toLocaleDateString()}</td>
+                    <td class="fw-bold ${typeClass}">${tx.type === 'Income' ? '+' : '-'}${formatCurrency(tx.amount)}</td>
+                    <td><span class="badge ${tx.status === 'Completed' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${tx.status === 'Completed' ? 'success' : 'warning'}">${tx.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-trash"></i></button>
+                    </td>
+                `;
+                transactionsTable.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching transactions:', error);
+        }
+    }
+
+    // Fetch Media
+    async function fetchMedia() {
+        const table = document.querySelector('table.table-hover tbody');
+        if (!table || !window.location.pathname.includes('media.html')) return;
+
+        try {
+            const response = await authFetch('/api/media');
+            const data = await response.json();
+            
+            table.innerHTML = '';
+            data.forEach(m => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light rounded p-2 me-3">
+                                <i class="bi ${m.type === 'Video' ? 'bi-play-btn' : 'bi-image'}"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">${m.title}</div>
+                                <div class="text-muted x-small">${m.category}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${m.type}</td>
+                    <td>${new Date(m.upload_date).toLocaleDateString()}</td>
+                    <td><span class="badge bg-success bg-opacity-10 text-success">Published</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-trash"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching media:', error);
+        }
+    }
+
+    // Page Routing
+    const path = window.location.pathname;
+    if (path === '/' || path.includes('index.html')) {
         fetchDashboardStats();
+    } else if (path.includes('members.html')) {
+        fetchMembers();
+    } else if (path.includes('users.html')) {
+        fetchUsers();
+    } else if (path.includes('website.html')) {
+        fetchWebsiteSettings();
+        fetchWebsiteSubmissions();
+    } else if (path.includes('finance.html')) {
+        fetchFinanceSummary();
+        fetchTransactions();
+    } else if (path.includes('partnership.html')) {
+        fetchPartnerships();
+    } else if (path.includes('testimonies.html')) {
+        fetchTestimonies();
+    } else if (path.includes('baptism.html')) {
+        fetchBaptismRequests();
+    } else if (path.includes('media.html')) {
+        fetchMedia();
     }
 
     // Set User Name
@@ -45,11 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (userName) {
         const userElements = document.querySelectorAll('.user-info h6, .navbar .d-md-inline');
         userElements.forEach(el => {
-            if (userName === 'samie') {
-                el.textContent = 'Samie';
-            } else {
-                el.textContent = userName;
-            }
+            el.textContent = userName;
         });
     }
 
@@ -198,10 +560,85 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+    // Update Website Settings
+    const editWebsiteForm = document.getElementById('editWebsiteForm');
+    if (editWebsiteForm) {
+        editWebsiteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(editWebsiteForm);
+            const data = {
+                hero_title: formData.get('heroTitle'),
+                hero_subtitle: formData.get('heroSubtitle'),
+                primary_button_text: formData.get('primaryButtonText'),
+                secondary_button_text: formData.get('secondaryButtonText')
+            };
+
+            try {
+                const response = await authFetch('/api/website/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showNotification('Website content updated successfully!', 'success');
+                    const modalElement = document.getElementById('editWebsiteModal');
+                    if (modalElement) {
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) modal.hide();
+                    }
+                    fetchWebsiteSettings();
+                } else {
+                    showNotification('Failed to update website content.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating website settings:', error);
+                showNotification('An error occurred.', 'danger');
+            }
+        });
+    }
+
+    // Save SEO & Form Settings
+    const saveSeoBtn = document.getElementById('saveSeoSettings');
+    if (saveSeoBtn) {
+        saveSeoBtn.addEventListener('click', async () => {
+            const data = {
+                meta_title: document.getElementById('metaTitle')?.value,
+                google_analytics_id: document.getElementById('gaId')?.value,
+                notification_email: document.getElementById('notificationEmail')?.value,
+                forms_enabled: {
+                    partnership: document.getElementById('formPartnership')?.checked,
+                    testimony: document.getElementById('formTestimony')?.checked,
+                    baptism: document.getElementById('formBaptism')?.checked
+                }
+            };
+
+            try {
+                const response = await authFetch('/api/website/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showNotification('Settings saved successfully!', 'success');
+                    fetchWebsiteSettings();
+                } else {
+                    showNotification('Failed to save settings.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showNotification('An error occurred.', 'danger');
+            }
+        });
+    }
+
     // Form Submissions
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         form.addEventListener('submit', (e) => {
+            if (form.id === 'loginForm' || form.id === 'editWebsiteForm') return;
+            
             e.preventDefault();
             const submitBtn = form.querySelector('[type="submit"]');
             const originalText = submitBtn ? submitBtn.innerHTML : '';

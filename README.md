@@ -66,6 +66,7 @@ This application uses a MySQL backend. To set it up:
     DB_USER=your_username
     DB_PASSWORD=your_password
     DB_NAME=ecclesia_cms
+    JWT_SECRET=your_jwt_secret_here
     ```
 
 ### Building for Production
@@ -151,6 +152,18 @@ Internal media library for church content.
 - `category`: VARCHAR(50)
 - `uploaded_by`: UUID (Foreign Key to `users`)
 - `created_at`: TIMESTAMP
+
+### 8. `website_settings`
+Public website configuration.
+- `id`: INT (Primary Key)
+- `hero_title`: VARCHAR(255)
+- `hero_subtitle`: TEXT
+- `primary_action_text`: VARCHAR(50)
+- `secondary_action_text`: VARCHAR(50)
+- `notification_email`: VARCHAR(255)
+- `meta_title`: VARCHAR(255)
+- `google_analytics_id`: VARCHAR(50)
+- `forms_enabled`: JSON (Object mapping form names to boolean)
 
 ---
 

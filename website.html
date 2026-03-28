@@ -293,7 +293,7 @@
                                 <hr>
                                 <div class="mb-0">
                                     <label class="form-label small fw-bold">Notification Email</label>
-                                    <input type="email" class="form-control form-control-sm mb-2" value="web-alerts@pmcc.org">
+                                    <input type="email" id="notificationEmail" class="form-control form-control-sm mb-2" value="web-alerts@pmcc.org">
                                     <p class="text-muted x-small mb-0">Emails will be sent here when a form is submitted.</p>
                                 </div>
                             </div>
@@ -306,13 +306,13 @@
                             <div class="card-body p-4 pt-0">
                                 <div class="mb-3">
                                     <label class="form-label small fw-bold">Meta Title</label>
-                                    <input type="text" class="form-control form-control-sm" value="PMCC - Prayer Miracle Church of Christ">
+                                    <input type="text" id="metaTitle" class="form-control form-control-sm" value="PMCC - Prayer Miracle Church of Christ">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label small fw-bold">Google Analytics ID</label>
-                                    <input type="text" class="form-control form-control-sm" placeholder="UA-XXXXXXXXX-X">
+                                    <input type="text" id="gaId" class="form-control form-control-sm" placeholder="UA-XXXXXXXXX-X">
                                 </div>
-                                <button class="btn btn-primary btn-sm w-100">Save SEO Settings</button>
+                                <button id="saveSeoSettings" class="btn btn-primary btn-sm w-100">Save SEO Settings</button>
                             </div>
                         </div>
                     </div>
@@ -340,11 +340,11 @@
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold">Primary Action Button</label>
-                                        <input type="text" class="form-control" value="Join Us Online">
+                                        <input type="text" name="primaryButtonText" class="form-control" value="Join Us Online">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold">Secondary Action Button</label>
-                                        <input type="text" class="form-control" value="Request Prayer">
+                                        <input type="text" name="secondaryButtonText" class="form-control" value="Request Prayer">
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-end gap-2 mt-4">

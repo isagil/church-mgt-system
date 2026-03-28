@@ -3,7 +3,21 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import pool from './db.js';
+import dotenv from 'dotenv';
+
+// Import Routes
+import authRoutes from './src/routes/auth.js';
+import memberRoutes from './src/routes/members.js';
+import financeRoutes from './src/routes/finance.js';
+import dashboardRoutes from './src/routes/dashboard.js';
+import userRoutes from './src/routes/users.js';
+import partnershipRoutes from './src/routes/partnerships.js';
+import testimonyRoutes from './src/routes/testimonies.js';
+import baptismRoutes from './src/routes/baptism-requests.js';
+import mediaRoutes from './src/routes/media.js';
+import websiteRoutes from './src/routes/website.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,94 +34,17 @@ async function startServer() {
     res.json({ status: 'ok', message: 'Backend is running with MySQL support' });
   });
 
-  /**
-   * SQL SCHEMA FOR REFERENCE:
-   * 
-   * CREATE TABLE members (
-   *   id INT AUTO_INCREMENT PRIMARY KEY,
-   *   full_name VARCHAR(255) NOT NULL,
-   *   email VARCHAR(255),
-   *   phone VARCHAR(20),
-   *   join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   * );
-   * 
-   * CREATE TABLE transactions (
-   *   id INT AUTO_INCREMENT PRIMARY KEY,
-   *   amount DECIMAL(10, 2) NOT NULL,
-   *   type ENUM('income', 'expense') NOT NULL,
-   *   category VARCHAR(100),
-   *   description TEXT,
-   *   date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   * );
-   */
-
-  // Example API: Get Dashboard Stats
-  app.get('/api/dashboard/stats', async (req, res) => {
-    try {
-      // Real MySQL query example:
-      // const [memberCount] = await pool.query('SELECT COUNT(*) as count FROM members');
-      // const [incomeSum] = await pool.query('SELECT SUM(amount) as total FROM transactions WHERE type = "income"');
-      
-      res.json({
-        totalMembers: 1250,
-        totalPartners: 450,
-        totalIncome: 45230,
-        totalTestimonies: 85,
-        pendingBaptisms: 12
-      });
-    } catch (error) {
-      console.error('Database error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-
-  // API: Get Members
-  app.get('/api/members', async (req, res) => {
-    try {
-      // const [rows] = await pool.query('SELECT * FROM members ORDER BY join_date DESC');
-      res.json([
-        { id: 1, full_name: 'John Doe', email: 'john@example.com', join_date: '2026-01-01' }
-      ]);
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-
-  // API: Login
-  app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-      // Real MySQL query example:
-      // const [rows] = await pool.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-      // if (rows.length > 0) { ... }
-
-      // For now, simulate success for the requested credentials
-      if (username === 'samie' && password === 'timeisgood') {
-        res.json({
-          success: true,
-          user: { username: 'samie', role: 'Admin' }
-        });
-      } else {
-        res.status(401).json({ success: false, message: 'Invalid credentials' });
-      }
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-
-  // Example API: Get Finance Summary
-  app.get('/api/finance/summary', async (req, res) => {
-    try {
-      // const [rows] = await pool.query('SELECT SUM(amount) as total FROM transactions WHERE type = "income"');
-      res.json({
-        totalIncome: 45000.50,
-        totalExpenses: 12500.75,
-        netBalance: 32499.75
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
+  // Use Modular Routes
+  app.use('/api/auth', authRoutes);
+  app.use('/api/members', memberRoutes);
+  app.use('/api/finance', financeRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/users', userRoutes);
+  app.use('/api/partnerships', partnershipRoutes);
+  app.use('/api/testimonies', testimonyRoutes);
+  app.use('/api/baptism-requests', baptismRoutes);
+  app.use('/api/media', mediaRoutes);
+  app.use('/api/website', websiteRoutes);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

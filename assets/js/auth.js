@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authenticating...';
             
             // Call backend API
-            fetch('/api/login', {
+            fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     // Success
                     localStorage.setItem('pmcc_auth', 'true');
+                    localStorage.setItem('pmcc_token', data.token);
                     localStorage.setItem('pmcc_user', data.user.username);
+                    localStorage.setItem('pmcc_role', data.user.role);
                     
                     // Redirect to dashboard
                     window.location.href = '/index.html';
@@ -41,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                     
-                    alert(data.message || 'Invalid username or password. Please try again.');
+                    alert(data.error || 'Invalid username or password. Please try again.');
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
@@ -68,6 +70,33 @@ document.addEventListener('DOMContentLoaded', function() {
 // Logout function
 export function logout() {
     localStorage.removeItem('pmcc_auth');
+    localStorage.removeItem('pmcc_token');
     localStorage.removeItem('pmcc_user');
+    localStorage.removeItem('pmcc_role');
     window.location.href = '/login.html';
+}
+
+// Authenticated fetch helper
+export async function authFetch(url, options = {}) {
+    const token = localStorage.getItem('pmcc_token');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (response.status === 401) {
+        logout();
+        throw new Error('Session expired. Please login again.');
+    }
+
+    return response;
 }
