@@ -87,8 +87,6 @@
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-white" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -122,17 +120,17 @@
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold">Member Name / Source</label>
-                                            <input type="text" class="form-control" placeholder="Enter name" required>
+                                            <input type="text" name="description" class="form-control" placeholder="Enter name" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold">Transaction Type</label>
-                                            <select class="form-select" required>
+                                            <select name="type" class="form-select" required>
                                                 <option value="">Select Type</option>
-                                                <option>Tithe</option>
-                                                <option>Offering</option>
-                                                <option>Partnership</option>
-                                                <option>Expenditure</option>
-                                                <option>Other Income</option>
+                                                <option value="Tithe">Tithe</option>
+                                                <option value="Offering">Offering</option>
+                                                <option value="Partnership">Partnership</option>
+                                                <option value="Expenditure">Expenditure</option>
+                                                <option value="Other Income">Other Income</option>
                                             </select>
                                         </div>
                                     </div>
@@ -141,26 +139,26 @@
                                             <label class="form-label small fw-bold">Amount</label>
                                             <div class="input-group">
                                                 <span class="input-group-text currency-symbol">$</span>
-                                                <input type="number" class="form-control" placeholder="0.00" required>
+                                                <input type="number" name="amount" step="0.01" class="form-control" placeholder="0.00" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label small fw-bold">Payment Method</label>
-                                            <select class="form-select" required>
-                                                <option>Bank Transfer</option>
-                                                <option>Cash</option>
-                                                <option>Card</option>
-                                                <option>Check</option>
+                                            <select name="category" class="form-select" required>
+                                                <option value="Bank Transfer">Bank Transfer</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Card">Card</option>
+                                                <option value="Check">Check</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Date</label>
-                                        <input type="date" class="form-control" required>
+                                        <input type="date" name="date" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Notes (Optional)</label>
-                                        <textarea class="form-control" rows="3" placeholder="Add any details..."></textarea>
+                                        <textarea name="notes" class="form-control" rows="3" placeholder="Add any details..."></textarea>
                                     </div>
                                     <div class="d-flex justify-content-end gap-2 mt-4">
                                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -173,18 +171,18 @@
                 </div>
 
                 <!-- Tabs -->
-                <ul class="nav nav-tabs mb-4 border-0">
+                <ul class="nav nav-tabs mb-4 border-0" id="financeTabs">
                     <li class="nav-item">
-                        <a class="nav-link active border-0 border-bottom border-primary border-3 fw-bold" href="#">Overview</a>
+                        <a class="nav-link active" href="#" data-type="all">Overview</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link border-0 text-muted" href="#">Tithes</a>
+                        <a class="nav-link" href="#" data-type="Tithe">Tithes</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link border-0 text-muted" href="#">Offerings</a>
+                        <a class="nav-link" href="#" data-type="Offering">Offerings</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link border-0 text-muted" href="#">Expenditures</a>
+                        <a class="nav-link" href="#" data-type="Expenditure">Expenditures</a>
                     </li>
                 </ul>
 
@@ -232,7 +230,7 @@
                         <div class="d-flex gap-2">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control bg-light border-0" placeholder="Search...">
+                                <input type="text" id="transactionSearch" class="form-control bg-light border-0" placeholder="Search...">
                             </div>
                             <button class="btn btn-sm btn-light border"><i class="bi bi-filter"></i></button>
                         </div>

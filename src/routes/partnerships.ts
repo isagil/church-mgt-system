@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { partnerships, members, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -17,29 +17,23 @@ const partnershipSchema = z.object({
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { category, status, member_id } = req.query;
-    let query = `
-      SELECT p.*, m.full_name as member_name 
-      FROM partnerships p 
-      JOIN members m ON p.member_id = m.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
+    
+    let filtered = partnerships.map(p => {
+      const member = members.find(m => m.id === p.member_id);
+      return { ...p, member_name: member ? member.full_name : 'Unknown' };
+    });
 
     if (category) {
-      query += ' AND p.category = ?';
-      params.push(category);
+      filtered = filtered.filter(p => p.category === category);
     }
     if (status) {
-      query += ' AND p.status = ?';
-      params.push(status);
+      filtered = filtered.filter(p => p.status === status);
     }
     if (member_id) {
-      query += ' AND p.member_id = ?';
-      params.push(member_id);
+      filtered = filtered.filter(p => p.member_id === parseInt(member_id as string));
     }
 
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    res.json(filtered);
   } catch (error) {
     console.error('Error fetching partnerships:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -50,17 +44,12 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query(`
-      SELECT p.*, m.full_name as member_name 
-      FROM partnerships p 
-      JOIN members m ON p.member_id = m.id
-      WHERE p.id = ?
-    `, [id]);
-    const partnership = (rows as any[])[0];
+    const partnership = partnerships.find(p => p.id === parseInt(id as string));
     if (!partnership) {
       return res.status(404).json({ error: 'Partnership not found' });
     }
-    res.json(partnership);
+    const member = members.find(m => m.id === partnership.member_id);
+    res.json({ ...partnership, member_name: member ? member.full_name : 'Unknown' });
   } catch (error) {
     console.error('Error fetching partnership:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -71,11 +60,13 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, authorizeRole(['Admin', 'Finance']), async (req, res) => {
   try {
     const data = partnershipSchema.parse(req.body);
-    const [result] = await pool.query(
-      'INSERT INTO partnerships (member_id, category, commitment_amount, frequency, status) VALUES (?, ?, ?, ?, ?)',
-      [data.member_id, data.category, data.commitment_amount, data.frequency, data.status]
-    );
-    res.status(201).json({ id: (result as any).insertId, ...data });
+    const newPartnership = {
+      id: getNextId('partnerships'),
+      ...data,
+      created_at: new Date().toISOString()
+    };
+    partnerships.push(newPartnership);
+    res.status(201).json(newPartnership);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -90,11 +81,15 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async
   try {
     const { id } = req.params;
     const data = partnershipSchema.parse(req.body);
-    await pool.query(
-      'UPDATE partnerships SET member_id = ?, category = ?, commitment_amount = ?, frequency = ?, status = ? WHERE id = ?',
-      [data.member_id, data.category, data.commitment_amount, data.frequency, data.status, id]
-    );
-    res.json({ id, ...data });
+    const index = partnerships.findIndex(p => p.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Partnership not found' });
+    }
+    partnerships[index] = {
+      ...partnerships[index],
+      ...data
+    };
+    res.json(partnerships[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -108,7 +103,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async
 router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM partnerships WHERE id = ?', [id]);
+    const index = partnerships.findIndex(p => p.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Partnership not found' });
+    }
+    partnerships.splice(index, 1);
     res.json({ message: 'Partnership deleted successfully' });
   } catch (error) {
     console.error('Error deleting partnership:', error);

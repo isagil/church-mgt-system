@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { mediaAssets, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -15,8 +15,10 @@ const mediaAssetSchema = z.object({
 // Get all media assets
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM media_assets ORDER BY created_at DESC');
-    res.json(rows);
+    const sortedAssets = [...mediaAssets].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    res.json(sortedAssets);
   } catch (error) {
     console.error('Error fetching media assets:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -27,8 +29,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM media_assets WHERE id = ?', [id]);
-    const asset = (rows as any[])[0];
+    const asset = mediaAssets.find(a => a.id === parseInt(id as string));
     if (!asset) {
       return res.status(404).json({ error: 'Media asset not found' });
     }
@@ -44,11 +45,14 @@ router.post('/', authenticateToken, authorizeRole(['Admin', 'Media']), async (re
   try {
     const data = mediaAssetSchema.parse(req.body);
     const uploaded_by = (req as any).user.id;
-    const [result] = await pool.query(
-      'INSERT INTO media_assets (title, file_url, file_type, category, uploaded_by) VALUES (?, ?, ?, ?, ?)',
-      [data.title, data.file_url, data.file_type, data.category, uploaded_by]
-    );
-    res.status(201).json({ id: (result as any).insertId, ...data });
+    const newAsset = {
+      id: getNextId('mediaAssets'),
+      ...data,
+      uploaded_by,
+      created_at: new Date().toISOString()
+    };
+    mediaAssets.push(newAsset);
+    res.status(201).json(newAsset);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -63,11 +67,15 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Media']), async (
   try {
     const { id } = req.params;
     const data = mediaAssetSchema.parse(req.body);
-    await pool.query(
-      'UPDATE media_assets SET title = ?, file_url = ?, file_type = ?, category = ? WHERE id = ?',
-      [data.title, data.file_url, data.file_type, data.category, id]
-    );
-    res.json({ id, ...data });
+    const index = mediaAssets.findIndex(a => a.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Media asset not found' });
+    }
+    mediaAssets[index] = {
+      ...mediaAssets[index],
+      ...data
+    };
+    res.json(mediaAssets[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -81,7 +89,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Media']), async (
 router.delete('/:id', authenticateToken, authorizeRole(['Admin', 'Media']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM media_assets WHERE id = ?', [id]);
+    const index = mediaAssets.findIndex(a => a.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Media asset not found' });
+    }
+    mediaAssets.splice(index, 1);
     res.json({ message: 'Media asset deleted successfully' });
   } catch (error) {
     console.error('Error deleting media asset:', error);

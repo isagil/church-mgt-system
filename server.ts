@@ -31,7 +31,7 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Backend is running with MySQL support' });
+    res.json({ status: 'ok', message: 'Backend is running in mock data mode' });
   });
 
   // Use Modular Routes
@@ -63,7 +63,7 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log('MySQL connection pool initialized.');
+    console.log('Mock data store initialized.');
   });
 }
 

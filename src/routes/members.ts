@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { members, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -15,18 +15,19 @@ const memberSchema = z.object({
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { search } = req.query;
-    let query = 'SELECT * FROM members';
-    const params: any[] = [];
+    let filteredMembers = [...members];
 
     if (search) {
-      query += ' WHERE full_name LIKE ? OR email LIKE ? OR phone LIKE ?';
-      const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      const searchTerm = (search as string).toLowerCase();
+      filteredMembers = filteredMembers.filter(m => 
+        m.full_name.toLowerCase().includes(searchTerm) || 
+        (m.email && m.email.toLowerCase().includes(searchTerm)) || 
+        (m.phone && m.phone.includes(searchTerm))
+      );
     }
 
-    query += ' ORDER BY join_date DESC';
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    filteredMembers.sort((a, b) => new Date(b.join_date).getTime() - new Date(a.join_date).getTime());
+    res.json(filteredMembers);
   } catch (error) {
     console.error('Error fetching members:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -37,8 +38,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM members WHERE id = ?', [id]);
-    const member = (rows as any[])[0];
+    const member = members.find(m => m.id === parseInt(id as string));
     if (!member) {
       return res.status(404).json({ error: 'Member not found' });
     }
@@ -53,12 +53,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
   try {
     const { full_name, email, phone } = memberSchema.parse(req.body);
-    const [result] = await pool.query(
-      'INSERT INTO members (full_name, email, phone) VALUES (?, ?, ?)',
-      [full_name, email, phone]
-    );
-    const insertId = (result as any).insertId;
-    res.status(201).json({ id: insertId, full_name, email, phone });
+    const newMember = {
+      id: getNextId('members'),
+      full_name,
+      email: email || null,
+      phone: phone || null,
+      join_date: new Date().toISOString()
+    };
+    members.push(newMember);
+    res.status(201).json(newMember);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -73,11 +76,17 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
   try {
     const { id } = req.params;
     const { full_name, email, phone } = memberSchema.parse(req.body);
-    await pool.query(
-      'UPDATE members SET full_name = ?, email = ?, phone = ? WHERE id = ?',
-      [full_name, email, phone, id]
-    );
-    res.json({ id, full_name, email, phone });
+    const index = members.findIndex(m => m.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    members[index] = {
+      ...members[index],
+      full_name,
+      email: email || null,
+      phone: phone || null
+    };
+    res.json(members[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -91,7 +100,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM members WHERE id = ?', [id]);
+    const index = members.findIndex(m => m.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    members.splice(index, 1);
     res.json({ message: 'Member deleted successfully' });
   } catch (error) {
     console.error('Error deleting member:', error);

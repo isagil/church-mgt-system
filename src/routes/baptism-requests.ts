@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { baptismRequests, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -16,8 +16,10 @@ const baptismRequestSchema = z.object({
 // Get all baptism requests
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM baptism_requests ORDER BY submitted_at DESC');
-    res.json(rows);
+    const sortedRequests = [...baptismRequests].sort((a, b) => 
+      new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+    );
+    res.json(sortedRequests);
   } catch (error) {
     console.error('Error fetching baptism requests:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -28,8 +30,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM baptism_requests WHERE id = ?', [id]);
-    const request = (rows as any[])[0];
+    const request = baptismRequests.find(r => r.id === parseInt(id as string));
     if (!request) {
       return res.status(404).json({ error: 'Baptism request not found' });
     }
@@ -44,11 +45,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/submit', async (req, res) => {
   try {
     const data = baptismRequestSchema.parse(req.body);
-    const [result] = await pool.query(
-      'INSERT INTO baptism_requests (full_name, email, phone, preferred_date) VALUES (?, ?, ?, ?)',
-      [data.full_name, data.email, data.phone, data.preferred_date]
-    );
-    res.status(201).json({ id: (result as any).insertId, ...data });
+    const newRequest = {
+      id: getNextId('baptismRequests'),
+      ...data,
+      location: 'Main Sanctuary', // Default location
+      submitted_at: new Date().toISOString()
+    };
+    baptismRequests.push(newRequest);
+    res.status(201).json(newRequest);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -63,11 +67,15 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
   try {
     const { id } = req.params;
     const data = baptismRequestSchema.parse(req.body);
-    await pool.query(
-      'UPDATE baptism_requests SET full_name = ?, email = ?, phone = ?, preferred_date = ?, status = ? WHERE id = ?',
-      [data.full_name, data.email, data.phone, data.preferred_date, data.status, id]
-    );
-    res.json({ id, ...data });
+    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Baptism request not found' });
+    }
+    baptismRequests[index] = {
+      ...baptismRequests[index],
+      ...data
+    };
+    res.json(baptismRequests[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -81,7 +89,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM baptism_requests WHERE id = ?', [id]);
+    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Baptism request not found' });
+    }
+    baptismRequests.splice(index, 1);
     res.json({ message: 'Baptism request deleted successfully' });
   } catch (error) {
     console.error('Error deleting baptism request:', error);
@@ -94,7 +106,11 @@ router.patch('/:id/status', authenticateToken, authorizeRole(['Admin', 'Pastor']
   try {
     const { status } = z.object({ status: z.enum(['Pending', 'Approved', 'Completed']) }).parse(req.body);
     const { id } = req.params;
-    await pool.query('UPDATE baptism_requests SET status = ? WHERE id = ?', [status, id]);
+    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Baptism request not found' });
+    }
+    baptismRequests[index].status = status;
     res.json({ message: 'Baptism request status updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -57,14 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Check auth on other pages
-    const isLoginPage = window.location.pathname.includes('login.html');
-    if (!isLoginPage) {
-        const isAuthenticated = localStorage.getItem('pmcc_auth') === 'true';
-        if (!isAuthenticated) {
-            window.location.href = '/login.html';
-        }
-    }
+    // Auth check removed to allow direct access
 });
 
 // Logout function
@@ -73,7 +66,7 @@ export function logout() {
     localStorage.removeItem('pmcc_token');
     localStorage.removeItem('pmcc_user');
     localStorage.removeItem('pmcc_role');
-    window.location.href = '/login.html';
+    window.location.href = '/index.html'; // Redirect to home instead of login
 }
 
 // Authenticated fetch helper
@@ -93,10 +86,6 @@ export async function authFetch(url, options = {}) {
         headers
     });
 
-    if (response.status === 401) {
-        logout();
-        throw new Error('Session expired. Please login again.');
-    }
-
+    // Removed auto-logout on 401 to keep app working
     return response;
 }

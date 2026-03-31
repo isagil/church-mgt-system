@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { transactions, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -7,7 +7,7 @@ const router = express.Router();
 
 const transactionSchema = z.object({
   amount: z.number().positive(),
-  type: z.enum(['Tithe', 'Offering', 'Expenditure', 'Partnership']),
+  type: z.enum(['Tithe', 'Offering', 'Expenditure', 'Partnership', 'Other Income']),
   category: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   status: z.enum(['Completed', 'Pending', 'Cancelled']).default('Pending'),
@@ -16,30 +16,31 @@ const transactionSchema = z.object({
 // Get all transactions with optional filtering
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { type, status, startDate, endDate } = req.query;
-    let query = 'SELECT * FROM transactions WHERE 1=1';
-    const params: any[] = [];
+    const { type, status, startDate, endDate, search } = req.query;
+    let filteredTransactions = [...transactions];
 
     if (type) {
-      query += ' AND type = ?';
-      params.push(type);
+      filteredTransactions = filteredTransactions.filter(t => t.type === type);
     }
     if (status) {
-      query += ' AND status = ?';
-      params.push(status);
+      filteredTransactions = filteredTransactions.filter(t => t.status === status);
     }
     if (startDate) {
-      query += ' AND date >= ?';
-      params.push(startDate);
+      filteredTransactions = filteredTransactions.filter(t => t.date >= (startDate as string));
     }
     if (endDate) {
-      query += ' AND date <= ?';
-      params.push(endDate);
+      filteredTransactions = filteredTransactions.filter(t => t.date <= (endDate as string));
+    }
+    if (search) {
+      const searchLower = (search as string).toLowerCase();
+      filteredTransactions = filteredTransactions.filter(t => 
+        t.description.toLowerCase().includes(searchLower) || 
+        t.category.toLowerCase().includes(searchLower)
+      );
     }
 
-    query += ' ORDER BY date DESC';
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    filteredTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    res.json(filteredTransactions);
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -49,11 +50,13 @@ router.get('/', authenticateToken, async (req, res) => {
 // Get finance summary stats
 router.get('/summary', authenticateToken, async (req, res) => {
   try {
-    const [incomeRows] = await pool.query('SELECT SUM(amount) as total FROM transactions WHERE type IN ("Tithe", "Offering", "Partnership") AND status = "Completed"');
-    const [expenseRows] = await pool.query('SELECT SUM(amount) as total FROM transactions WHERE type = "Expenditure" AND status = "Completed"');
+    const totalIncome = transactions
+      .filter(t => ['Tithe', 'Offering', 'Partnership', 'Other Income'].includes(t.type) && t.status === 'Completed')
+      .reduce((sum, t) => sum + t.amount, 0);
     
-    const totalIncome = (incomeRows as any[])[0].total || 0;
-    const totalExpenses = (expenseRows as any[])[0].total || 0;
+    const totalExpenses = transactions
+      .filter(t => t.type === 'Expenditure' && t.status === 'Completed')
+      .reduce((sum, t) => sum + t.amount, 0);
     
     res.json({
       totalIncome,
@@ -70,8 +73,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM transactions WHERE id = ?', [id]);
-    const transaction = (rows as any[])[0];
+    const transaction = transactions.find(t => t.id === parseInt(id as string));
     if (!transaction) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
@@ -86,12 +88,18 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, authorizeRole(['Admin', 'Finance']), async (req, res) => {
   try {
     const { amount, type, category, description, status } = transactionSchema.parse(req.body);
-    const [result] = await pool.query(
-      'INSERT INTO transactions (amount, type, category, description, status) VALUES (?, ?, ?, ?, ?)',
-      [amount, type, category, description, status]
-    );
-    const insertId = (result as any).insertId;
-    res.status(201).json({ id: insertId, amount, type, category, description, status });
+    const newTransaction = {
+      id: getNextId('transactions'),
+      amount,
+      type,
+      category: category || '',
+      description: description || '',
+      status,
+      date: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString()
+    };
+    transactions.push(newTransaction);
+    res.status(201).json(newTransaction);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -106,11 +114,19 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async
   try {
     const { id } = req.params;
     const { amount, type, category, description, status } = transactionSchema.parse(req.body);
-    await pool.query(
-      'UPDATE transactions SET amount = ?, type = ?, category = ?, description = ?, status = ? WHERE id = ?',
-      [amount, type, category, description, status, id]
-    );
-    res.json({ id, amount, type, category, description, status });
+    const index = transactions.findIndex(t => t.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    transactions[index] = {
+      ...transactions[index],
+      amount,
+      type,
+      category: category || '',
+      description: description || '',
+      status
+    };
+    res.json(transactions[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -124,7 +140,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async
 router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM transactions WHERE id = ?', [id]);
+    const index = transactions.findIndex(t => t.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    transactions.splice(index, 1);
     res.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     console.error('Error deleting transaction:', error);

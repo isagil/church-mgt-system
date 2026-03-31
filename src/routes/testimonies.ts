@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../../db.js';
+import { testimonies, getNextId } from '../mockData.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { z } from 'zod';
 
@@ -17,8 +17,10 @@ const testimonySchema = z.object({
 // Get all testimonies
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM testimonies ORDER BY submitted_at DESC');
-    res.json(rows);
+    const sortedTestimonies = [...testimonies].sort((a, b) => 
+      new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+    );
+    res.json(sortedTestimonies);
   } catch (error) {
     console.error('Error fetching testimonies:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -29,8 +31,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM testimonies WHERE id = ?', [id]);
-    const testimony = (rows as any[])[0];
+    const testimony = testimonies.find(t => t.id === parseInt(id as string));
     if (!testimony) {
       return res.status(404).json({ error: 'Testimony not found' });
     }
@@ -45,11 +46,13 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/submit', async (req, res) => {
   try {
     const data = testimonySchema.parse(req.body);
-    const [result] = await pool.query(
-      'INSERT INTO testimonies (full_name, email, title, content, media_urls) VALUES (?, ?, ?, ?, ?)',
-      [data.full_name, data.email, data.title, data.content, JSON.stringify(data.media_urls || [])]
-    );
-    res.status(201).json({ id: (result as any).insertId, ...data });
+    const newTestimony = {
+      id: getNextId('testimonies'),
+      ...data,
+      submitted_at: new Date().toISOString()
+    };
+    testimonies.push(newTestimony);
+    res.status(201).json(newTestimony);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -64,11 +67,15 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
   try {
     const { id } = req.params;
     const data = testimonySchema.parse(req.body);
-    await pool.query(
-      'UPDATE testimonies SET full_name = ?, email = ?, title = ?, content = ?, media_urls = ?, status = ? WHERE id = ?',
-      [data.full_name, data.email, data.title, data.content, JSON.stringify(data.media_urls || []), data.status, id]
-    );
-    res.json({ id, ...data });
+    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Testimony not found' });
+    }
+    testimonies[index] = {
+      ...testimonies[index],
+      ...data
+    };
+    res.json(testimonies[index]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -82,7 +89,11 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM testimonies WHERE id = ?', [id]);
+    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Testimony not found' });
+    }
+    testimonies.splice(index, 1);
     res.json({ message: 'Testimony deleted successfully' });
   } catch (error) {
     console.error('Error deleting testimony:', error);
@@ -95,7 +106,11 @@ router.patch('/:id/status', authenticateToken, authorizeRole(['Admin', 'Pastor']
   try {
     const { status } = z.object({ status: z.enum(['Pending', 'Approved', 'Declined']) }).parse(req.body);
     const { id } = req.params;
-    await pool.query('UPDATE testimonies SET status = ? WHERE id = ?', [status, id]);
+    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Testimony not found' });
+    }
+    testimonies[index].status = status;
     res.json({ message: 'Testimony status updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {

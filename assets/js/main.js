@@ -3,15 +3,6 @@ import { updateAllCurrencies, formatCurrency, getCurrencySymbol } from './curren
 import { logout, authFetch } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Auth Check
-    const isAuthenticated = localStorage.getItem('pmcc_auth') === 'true';
-    const isLoginPage = window.location.pathname.includes('login.html');
-    
-    if (!isAuthenticated && !isLoginPage) {
-        window.location.href = '/login.html';
-        return;
-    }
-
     // Initial currency update
     updateAllCurrencies();
 
@@ -187,24 +178,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await authFetch('/api/finance/summary');
             const data = await response.json();
             
-            const totalIncomeEl = document.querySelector('.card h6:contains("Total Income")')?.nextElementSibling;
-            const totalExpensesEl = document.querySelector('.card h6:contains("Total Expenses")')?.nextElementSibling;
-            const netBalanceEl = document.querySelector('.card h6:contains("Net Balance")')?.nextElementSibling;
-            
-            // Safer way to find elements by text
             const cards = document.querySelectorAll('.card');
             cards.forEach(card => {
-                const h6 = card.querySelector('h6');
-                if (!h6) return;
+                const p = card.querySelector('p');
+                if (!p) return;
                 const h3 = card.querySelector('h3');
                 if (!h3) return;
                 
-                if (h6.textContent.includes('Total Income')) {
-                    h3.textContent = formatCurrency(data.total_income);
-                } else if (h6.textContent.includes('Total Expenses')) {
-                    h3.textContent = formatCurrency(data.total_expenses);
-                } else if (h6.textContent.includes('Net Balance')) {
-                    h3.textContent = formatCurrency(data.net_balance);
+                if (p.textContent.includes('Total Income')) {
+                    h3.textContent = formatCurrency(data.totalIncome);
+                } else if (p.textContent.includes('Total Expenses')) {
+                    h3.textContent = formatCurrency(data.totalExpenses);
+                } else if (p.textContent.includes('Net Balance')) {
+                    h3.textContent = formatCurrency(data.netBalance);
                 }
             });
         } catch (error) {
@@ -302,21 +288,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Fetch Transactions
-    async function fetchTransactions() {
+    async function fetchTransactions(type = 'all', search = '') {
         const transactionsTable = document.querySelector('table.table-hover tbody');
         if (!transactionsTable || !window.location.pathname.includes('finance.html')) return;
 
         try {
-            const response = await authFetch('/api/finance/transactions');
+            let url = '/api/finance';
+            const params = new URLSearchParams();
+            if (type !== 'all') params.append('type', type);
+            if (search) params.append('search', search);
+            
+            if (params.toString()) {
+                url += `?${params.toString()}`;
+            }
+            
+            const response = await authFetch(url);
             const data = await response.json();
             
             transactionsTable.innerHTML = '';
             data.forEach(tx => {
                 const row = document.createElement('tr');
-                const typeClass = tx.type === 'Income' ? 'text-success' : 'text-danger';
-                const typeIcon = tx.type === 'Income' ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+                const isIncome = ['Tithe', 'Offering', 'Partnership', 'Other Income'].includes(tx.type);
+                const typeClass = isIncome ? 'text-success' : 'text-danger';
+                const typeIcon = isIncome ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
                 
                 row.innerHTML = `
+                    <td>${new Date(tx.date).toLocaleDateString()}</td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="bg-light rounded p-2 me-3">
@@ -324,16 +321,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div>
                                 <div class="fw-bold">${tx.description}</div>
-                                <div class="text-muted x-small">${tx.category}</div>
                             </div>
                         </div>
                     </td>
-                    <td>${new Date(tx.date).toLocaleDateString()}</td>
-                    <td class="fw-bold ${typeClass}">${tx.type === 'Income' ? '+' : '-'}${formatCurrency(tx.amount)}</td>
+                    <td><span class="badge bg-light text-dark border">${tx.type}</span></td>
+                    <td class="fw-bold ${typeClass}">${isIncome ? '+' : '-'}${formatCurrency(tx.amount)}</td>
+                    <td><span class="text-muted small">${tx.category || 'N/A'}</span></td>
                     <td><span class="badge ${tx.status === 'Completed' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${tx.status === 'Completed' ? 'success' : 'warning'}">${tx.status}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-sm btn-light border-0" onclick="editTransaction(${tx.id})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light border-0 text-danger" onclick="deleteTransaction(${tx.id})"><i class="bi bi-trash"></i></button>
                     </td>
                 `;
                 transactionsTable.appendChild(row);
@@ -341,6 +338,20 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error fetching transactions:', error);
         }
+    }
+
+    // Transaction Search
+    const transactionSearch = document.getElementById('transactionSearch');
+    if (transactionSearch) {
+        let timeout;
+        transactionSearch.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                const activeTab = document.querySelector('#financeTabs .nav-link.active');
+                const type = activeTab ? activeTab.getAttribute('data-type') : 'all';
+                fetchTransactions(type, e.target.value);
+            }, 300);
+        });
     }
 
     // Fetch Media
@@ -382,6 +393,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Finance Tab Filtering
+    const financeTabs = document.getElementById('financeTabs');
+    if (financeTabs) {
+        financeTabs.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.nav-link');
+            if (!target) return;
+
+            // Update active state
+            financeTabs.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            target.classList.add('active');
+
+            const type = target.getAttribute('data-type');
+            fetchTransactions(type);
+        });
+    }
+
+    // Add Transaction Form
+    const addTransactionForm = document.getElementById('addTransactionForm');
+    if (addTransactionForm) {
+        addTransactionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addTransactionForm);
+            const data = {
+                description: formData.get('description'),
+                type: formData.get('type'),
+                amount: parseFloat(formData.get('amount')),
+                category: formData.get('category'),
+                date: formData.get('date'),
+                notes: formData.get('notes'),
+                status: 'Completed'
+            };
+
+            try {
+                const response = await authFetch('/api/finance', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addTransactionModal'));
+                    modal.hide();
+                    addTransactionForm.reset();
+                    fetchFinanceSummary();
+                    fetchTransactions();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to save transaction'));
+                }
+            } catch (error) {
+                console.error('Error saving transaction:', error);
+            }
+        });
+    }
+
+    // Global functions for edit/delete
+    window.deleteTransaction = async (id) => {
+        if (!confirm('Are you sure you want to delete this transaction?')) return;
+        try {
+            const response = await authFetch(`/api/finance/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                fetchFinanceSummary();
+                fetchTransactions();
+            }
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
+        }
+    };
+
+    window.editTransaction = (id) => {
+        // For now, just a placeholder or simple implementation
+        alert('Edit functionality coming soon!');
+    };
     // Page Routing
     const path = window.location.pathname;
     if (path === '/' || path.includes('index.html')) {
@@ -856,20 +940,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 lockBtn.innerHTML = '<i class="bi bi-shield-check"></i>';
                 window.showToast('User account locked', 'warning');
             }
-        }
-    });
-
-    // Logout
-    const allDropdownItems = document.querySelectorAll('.dropdown-item');
-    allDropdownItems.forEach(item => {
-        if (item.textContent.includes('Logout')) {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.showToast('Logging out...', 'info');
-                setTimeout(() => {
-                    logout();
-                }, 1500);
-            });
         }
     });
 
