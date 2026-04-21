@@ -1,6 +1,5 @@
 import express from 'express';
-import { members, getNextId } from '../mockData.js';
-import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -12,22 +11,20 @@ const memberSchema = z.object({
 });
 
 // Get all members with optional search
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
-    let filteredMembers = [...members];
+    let query = supabase.from('members').select('*');
 
     if (search) {
       const searchTerm = (search as string).toLowerCase();
-      filteredMembers = filteredMembers.filter(m => 
-        m.full_name.toLowerCase().includes(searchTerm) || 
-        (m.email && m.email.toLowerCase().includes(searchTerm)) || 
-        (m.phone && m.phone.includes(searchTerm))
-      );
+      query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
     }
 
-    filteredMembers.sort((a, b) => new Date(b.join_date).getTime() - new Date(a.join_date).getTime());
-    res.json(filteredMembers);
+    const { data, error } = await query.order('join_date', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     console.error('Error fetching members:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -35,14 +32,16 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get a single member
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const member = members.find(m => m.id === parseInt(id as string));
-    if (!member) {
-      return res.status(404).json({ error: 'Member not found' });
+    const { data, error } = await supabase.from('members').select('*').eq('id', id).single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Member not found' });
+      throw error;
     }
-    res.json(member);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching member:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -50,17 +49,17 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Add a new member
-router.post('/', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { full_name, email, phone } = memberSchema.parse(req.body);
-    const newMember = {
-      id: getNextId('members'),
+    const { data: newMember, error } = await supabase.from('members').insert({
       full_name,
       email: email || null,
       phone: phone || null,
       join_date: new Date().toISOString()
-    };
-    members.push(newMember);
+    }).select().single();
+    
+    if (error) throw error;
     res.status(201).json(newMember);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -72,21 +71,22 @@ router.post('/', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (r
 });
 
 // Update a member
-router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { full_name, email, phone } = memberSchema.parse(req.body);
-    const index = members.findIndex(m => m.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Member not found' });
-    }
-    members[index] = {
-      ...members[index],
+    
+    const { data: updated, error } = await supabase.from('members').update({
       full_name,
       email: email || null,
       phone: phone || null
-    };
-    res.json(members[index]);
+    }).eq('id', id).select().single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Member not found' });
+      throw error;
+    }
+    res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -97,14 +97,12 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 });
 
 // Delete a member
-router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const index = members.findIndex(m => m.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Member not found' });
-    }
-    members.splice(index, 1);
+    const { error } = await supabase.from('members').delete().eq('id', id);
+    
+    if (error) throw error;
     res.json({ message: 'Member deleted successfully' });
   } catch (error) {
     console.error('Error deleting member:', error);

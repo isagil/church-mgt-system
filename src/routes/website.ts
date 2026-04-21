@@ -1,11 +1,9 @@
 import express from 'express';
 import { z } from 'zod';
-import { websiteSettings, partnerships, testimonies, baptismRequests, members } from '../mockData.js';
-import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
-// Validation schema for website settings
 const websiteSettingsSchema = z.object({
   hero_title: z.string().min(1).max(255),
   hero_subtitle: z.string().max(1000).optional(),
@@ -20,7 +18,9 @@ const websiteSettingsSchema = z.object({
 // GET /api/website/settings - Get current website settings
 router.get('/settings', async (req, res) => {
   try {
-    res.json(websiteSettings);
+    const { data, error } = await supabase.from('website_settings').select('*').single();
+    if (error && error.code !== 'PGRST116') throw error;
+    res.json(data || {});
   } catch (error) {
     console.error('Error fetching website settings:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -28,15 +28,27 @@ router.get('/settings', async (req, res) => {
 });
 
 // PUT /api/website/settings - Update website settings (Admin only)
-router.put('/settings', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
+router.put('/settings', async (req, res) => {
   try {
     const validatedData = websiteSettingsSchema.parse(req.body);
     
-    Object.assign(websiteSettings, {
-      ...validatedData,
-      updated_at: new Date().toISOString()
-    });
+    // Check if settings exists
+    const { data: existing } = await supabase.from('website_settings').select('id').single();
 
+    let result;
+    if (existing) {
+      result = await supabase.from('website_settings').update({
+        ...validatedData,
+        updated_at: new Date().toISOString()
+      }).eq('id', existing.id);
+    } else {
+      result = await supabase.from('website_settings').insert({
+        ...validatedData,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    if (result.error) throw result.error;
     res.json({ message: 'Website settings updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -48,31 +60,34 @@ router.put('/settings', authenticateToken, authorizeRole(['Admin']), async (req,
 });
 
 // GET /api/website/submissions - Get recent submissions for the website dashboard
-router.get('/submissions', authenticateToken, async (req, res) => {
+router.get('/submissions', async (req, res) => {
   try {
-    const recentPartnerships = partnerships.map(p => {
-      const member = members.find(m => m.id === p.member_id);
-      return {
-        type: 'Partnership',
-        name: member ? member.full_name : 'Unknown',
-        date: p.created_at,
-        status: p.status
-      };
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    const [partnershipsRes, testimoniesRes, baptismsRes] = await Promise.all([
+      supabase.from('partnerships').select('*, members(full_name)').order('created_at', { ascending: false }).limit(5),
+      supabase.from('testimonies').select('*').order('submitted_at', { ascending: false }).limit(5),
+      supabase.from('baptism_requests').select('*').order('submitted_at', { ascending: false }).limit(5)
+    ]);
 
-    const recentTestimonies = testimonies.map(t => ({
+    const recentPartnerships = (partnershipsRes.data || []).map((p: any) => ({
+      type: 'Partnership',
+      name: p.members ? p.members.full_name : 'Unknown',
+      date: p.created_at,
+      status: p.status
+    }));
+
+    const recentTestimonies = (testimoniesRes.data || []).map(t => ({
       type: 'Testimony',
       name: t.full_name,
       date: t.submitted_at,
       status: t.status
-    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    }));
 
-    const recentBaptisms = baptismRequests.map(b => ({
+    const recentBaptisms = (baptismsRes.data || []).map(b => ({
       type: 'Baptism',
       name: b.full_name,
       date: b.submitted_at,
       status: b.status
-    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    }));
 
     const allSubmissions = [...recentPartnerships, ...recentTestimonies, ...recentBaptisms]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())

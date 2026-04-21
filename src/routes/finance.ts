@@ -1,6 +1,5 @@
 import express from 'express';
-import { transactions, getNextId } from '../mockData.js';
-import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -14,33 +13,24 @@ const transactionSchema = z.object({
 });
 
 // Get all transactions with optional filtering
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { type, status, startDate, endDate, search } = req.query;
-    let filteredTransactions = [...transactions];
+    let query = supabase.from('finance_transactions').select('*');
 
-    if (type) {
-      filteredTransactions = filteredTransactions.filter(t => t.type === type);
-    }
-    if (status) {
-      filteredTransactions = filteredTransactions.filter(t => t.status === status);
-    }
-    if (startDate) {
-      filteredTransactions = filteredTransactions.filter(t => t.date >= (startDate as string));
-    }
-    if (endDate) {
-      filteredTransactions = filteredTransactions.filter(t => t.date <= (endDate as string));
-    }
+    if (type) query = query.eq('type', type);
+    if (status) query = query.eq('status', status);
+    if (startDate) query = query.gte('date', startDate as string);
+    if (endDate) query = query.lte('date', endDate as string);
     if (search) {
-      const searchLower = (search as string).toLowerCase();
-      filteredTransactions = filteredTransactions.filter(t => 
-        t.description.toLowerCase().includes(searchLower) || 
-        t.category.toLowerCase().includes(searchLower)
-      );
+      const searchTerm = (search as string).toLowerCase();
+      query = query.or(`description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
     }
 
-    filteredTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    res.json(filteredTransactions);
+    const { data, error } = await query.order('date', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -48,15 +38,22 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get finance summary stats
-router.get('/summary', authenticateToken, async (req, res) => {
+router.get('/summary', async (req, res) => {
   try {
-    const totalIncome = transactions
-      .filter(t => ['Tithe', 'Offering', 'Partnership', 'Other Income'].includes(t.type) && t.status === 'Completed')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const { data: transactions, error } = await supabase
+      .from('finance_transactions')
+      .select('amount, type, status')
+      .eq('status', 'Completed');
+
+    if (error) throw error;
+
+    const totalIncome = (transactions || [])
+      .filter(t => ['Tithe', 'Offering', 'Partnership', 'Other Income'].includes(t.type))
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     
-    const totalExpenses = transactions
-      .filter(t => t.type === 'Expenditure' && t.status === 'Completed')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = (transactions || [])
+      .filter(t => t.type === 'Expenditure')
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     
     res.json({
       totalIncome,
@@ -70,14 +67,16 @@ router.get('/summary', authenticateToken, async (req, res) => {
 });
 
 // Get a single transaction
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const transaction = transactions.find(t => t.id === parseInt(id as string));
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+    const { data, error } = await supabase.from('finance_transactions').select('*').eq('id', id).single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Transaction not found' });
+      throw error;
     }
-    res.json(transaction);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching transaction:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -85,20 +84,19 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Add a new transaction
-router.post('/', authenticateToken, authorizeRole(['Admin', 'Finance']), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { amount, type, category, description, status } = transactionSchema.parse(req.body);
-    const newTransaction = {
-      id: getNextId('transactions'),
+    const { data: newTransaction, error } = await supabase.from('finance_transactions').insert({
       amount,
       type,
       category: category || '',
       description: description || '',
       status,
-      date: new Date().toISOString().split('T')[0],
-      created_at: new Date().toISOString()
-    };
-    transactions.push(newTransaction);
+      date: new Date().toISOString().split('T')[0]
+    }).select().single();
+    
+    if (error) throw error;
     res.status(201).json(newTransaction);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -110,23 +108,24 @@ router.post('/', authenticateToken, authorizeRole(['Admin', 'Finance']), async (
 });
 
 // Update a transaction
-router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { amount, type, category, description, status } = transactionSchema.parse(req.body);
-    const index = transactions.findIndex(t => t.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-    transactions[index] = {
-      ...transactions[index],
+    
+    const { data: updated, error } = await supabase.from('finance_transactions').update({
       amount,
       type,
       category: category || '',
       description: description || '',
       status
-    };
-    res.json(transactions[index]);
+    }).eq('id', id).select().single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Transaction not found' });
+      throw error;
+    }
+    res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -137,14 +136,12 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Finance']), async
 });
 
 // Delete a transaction
-router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const index = transactions.findIndex(t => t.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-    transactions.splice(index, 1);
+    const { error } = await supabase.from('finance_transactions').delete().eq('id', id);
+    
+    if (error) throw error;
     res.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     console.error('Error deleting transaction:', error);

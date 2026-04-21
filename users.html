@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMCC - User Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+    <div class="wrapper d-flex">
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>PMCC</h4>
+            </div>
+            <div class="user-profile">
+                <img src="https://picsum.photos/seed/admin/40/40" alt="Admin">
+                <div class="user-info">
+                    <h6 class="mb-0">Admin User</h6>
+                    <span>Admin</span>
+                </div>
+            </div>
+            <ul class="nav flex-column mt-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard.html"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/members.html"><i class="bi bi-people"></i>Members</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/finance.html"><i class="bi bi-wallet2"></i>Finance</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/partnership.html"><i class="bi bi-people"></i>Partnership</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/testimonies.html"><i class="bi bi-chat-quote"></i>Testimonies</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/baptism.html"><i class="bi bi-droplet"></i>Baptism</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/media.html"><i class="bi bi-tv"></i>Media</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/website.html"><i class="bi bi-globe"></i>Website</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/users.html"><i class="bi bi-shield-lock"></i>Users</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings.html"><i class="bi bi-gear"></i>Settings</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div id="content">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarToggle" class="btn btn-light d-md-none me-3">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="d-flex align-items-center w-100">
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="dropdown">
+                                <button class="btn btn-light d-flex align-items-center gap-2 border-0" type="button" data-bs-toggle="dropdown">
+                                    <img src="https://picsum.photos/seed/admin/40/40" class="rounded-circle" width="32" height="32" alt="Admin">
+                                    <span class="d-none d-md-inline">Admin User</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="container-fluid p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold mb-0">User Management</h2>
+                        <p class="text-muted">Manage administrative users and permissions.</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="bi bi-shield-plus me-2"></i>Create User</button>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="usersTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0">Username</th>
+                                    <th class="border-0">Role</th>
+                                    <th class="border-0">Login Type</th>
+                                    <th class="border-0">Department</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Joined</th>
+                                    <th class="border-0">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add User Modal -->
+            <div class="modal fade" id="addUserModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Create System User</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="addUserForm">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Username</label>
+                                            <input type="text" class="form-control" name="username" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Password</label>
+                                            <input type="password" class="form-control" name="password" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Primary Role</label>
+                                    <select class="form-select" name="role" required>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Media">Media</option>
+                                        <option value="Support">Support</option>
+                                        <option value="User">Standard User</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Access Permissions</label>
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-sm table-borderless align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="ps-3 py-2">Module</th>
+                                                    <th class="text-center py-2">View</th>
+                                                    <th class="text-center py-2">Edit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="ps-3">Members Management</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_members_view" checked></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_members_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Finance & Tithes</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_finance_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_finance_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Partnership</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_partnership_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_partnership_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Testimonies</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_testimonies_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_testimonies_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Baptism Requests</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_baptism_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_baptism_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Media & Events</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_media_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_media_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Website Configuration</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_website_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_website_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">User Management & Settings</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_settings_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_settings_edit"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary w-100">Create User with Permissions</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit User Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Edit System User</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="editUserForm">
+                                <input type="hidden" name="userId" id="editUserId">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Username</label>
+                                            <input type="text" class="form-control" name="username" id="editUsername" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Password (Leave blank to keep current)</label>
+                                            <input type="password" class="form-control" name="password" placeholder="********">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Primary Role</label>
+                                    <select class="form-select" name="role" id="editRole" required>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Media">Media</option>
+                                        <option value="Support">Support</option>
+                                        <option value="User">Standard User</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Update Permissions</label>
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-sm table-borderless align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="ps-3 py-2">Module</th>
+                                                    <th class="text-center py-2">View</th>
+                                                    <th class="text-center py-2">Edit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="ps-3">Members Management</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_members_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_members_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Finance & Tithes</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_finance_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_finance_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Partnership</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_partnership_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_partnership_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Testimonies</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_testimonies_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_testimonies_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Baptism Requests</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_baptism_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_baptism_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Media & Events</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_media_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_media_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Website Configuration</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_website_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_website_edit"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">User Management & Settings</td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_settings_view"></td>
+                                                    <td class="text-center"><input type="checkbox" class="form-check-input" name="perm_settings_edit"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary w-100">Update User Permissions</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="bg-transparent border-top p-4 text-center mt-auto">
+                <p class="text-muted mb-0 small">&copy; 2026 Prayer Miracle Church of Christ. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>

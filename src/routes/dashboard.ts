@@ -1,22 +1,31 @@
 import express from 'express';
-import { members, transactions, testimonies, baptismRequests } from '../mockData.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
-router.get('/stats', authenticateToken, async (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
-    const totalMembers = members.length;
+    // Parallel fetching for performance
+    const [membersRes, transactionsRes, testimoniesRes, baptismsRes] = await Promise.all([
+      supabase.from('members').select('*', { count: 'exact', head: true }),
+      supabase.from('finance_transactions').select('amount, type, status').eq('status', 'Completed'),
+      supabase.from('testimonies').select('*', { count: 'exact', head: true }),
+      supabase.from('baptism_requests').select('*', { count: 'exact', head: true }).eq('status', 'Pending')
+    ]);
+
+    const totalMembers = membersRes.count || 0;
+    
+    const transactions = transactionsRes.data || [];
     const totalIncome = transactions
-      .filter(t => ['Tithe', 'Offering', 'Partnership', 'Income'].includes(t.type) && t.status === 'Completed')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => ['Tithe', 'Offering', 'Partnership', 'Income', 'Other Income'].includes(t.type))
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     
     const totalExpenses = transactions
-      .filter(t => (t.type === 'Expenditure' || t.type === 'Expense') && t.status === 'Completed')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type === 'Expenditure' || t.type === 'Expense')
+      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     
-    const totalTestimonies = testimonies.length;
-    const pendingBaptisms = baptismRequests.filter(r => r.status === 'Pending').length;
+    const totalTestimonies = testimoniesRes.count || 0;
+    const pendingBaptisms = baptismsRes.count || 0;
 
     res.json({
       totalMembers,

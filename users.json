@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "password": "pmccsam1",
+    "role": "Admin",
+    "permissions": {
+      "members": {
+        "view": true,
+        "edit": true
+      },
+      "finance": {
+        "view": true,
+        "edit": true
+      },
+      "testimonies": {
+        "view": true,
+        "edit": true
+      },
+      "media": {
+        "view": true,
+        "edit": true
+      },
+      "website": {
+        "view": true,
+        "edit": true
+      },
+      "users": {
+        "view": true,
+        "edit": true
+      }
+    },
+    "created_at": "2026-04-21T15:24:13.593Z"
+  }
+]

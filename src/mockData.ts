@@ -4,7 +4,9 @@
 export interface User {
   id: number;
   username: string;
+  password?: string;
   role: string;
+  permissions?: any;
   created_at: string;
 }
 
@@ -89,7 +91,21 @@ export interface WebsiteSettings {
 
 // Initial Data
 export const users: User[] = [
-  { id: 1, username: 'admin', role: 'Admin', created_at: new Date().toISOString() }
+  { 
+    id: 1, 
+    username: 'admin', 
+    password: 'pmccsam1', 
+    role: 'Admin', 
+    permissions: {
+      "members": {"view": true, "edit": true},
+      "finance": {"view": true, "edit": true},
+      "testimonies": {"view": true, "edit": true},
+      "media": {"view": true, "edit": true},
+      "website": {"view": true, "edit": true},
+      "users": {"view": true, "edit": true}
+    },
+    created_at: new Date().toISOString() 
+  }
 ];
 
 export const members: Member[] = [

@@ -1,6 +1,5 @@
 import express from 'express';
-import { testimonies, getNextId } from '../mockData.js';
-import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -15,12 +14,15 @@ const testimonySchema = z.object({
 });
 
 // Get all testimonies
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const sortedTestimonies = [...testimonies].sort((a, b) => 
-      new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
-    );
-    res.json(sortedTestimonies);
+    const { data, error } = await supabase
+      .from('testimonies')
+      .select('*')
+      .order('submitted_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     console.error('Error fetching testimonies:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -28,14 +30,16 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get a single testimony
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const testimony = testimonies.find(t => t.id === parseInt(id as string));
-    if (!testimony) {
-      return res.status(404).json({ error: 'Testimony not found' });
+    const { data, error } = await supabase.from('testimonies').select('*').eq('id', id).single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Testimony not found' });
+      throw error;
     }
-    res.json(testimony);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching testimony:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -46,12 +50,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/submit', async (req, res) => {
   try {
     const data = testimonySchema.parse(req.body);
-    const newTestimony = {
-      id: getNextId('testimonies'),
+    const { data: newTestimony, error } = await supabase.from('testimonies').insert({
       ...data,
       submitted_at: new Date().toISOString()
-    };
-    testimonies.push(newTestimony);
+    }).select().single();
+    
+    if (error) throw error;
     res.status(201).json(newTestimony);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -63,19 +67,19 @@ router.post('/submit', async (req, res) => {
 });
 
 // Update a testimony
-router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const data = testimonySchema.parse(req.body);
-    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Testimony not found' });
+    
+    const { data: updated, error } = await supabase.from('testimonies').update(data).eq('id', id).select().single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Testimony not found' });
+      throw error;
     }
-    testimonies[index] = {
-      ...testimonies[index],
-      ...data
-    };
-    res.json(testimonies[index]);
+    
+    res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -86,14 +90,12 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 });
 
 // Delete a testimony
-router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Testimony not found' });
-    }
-    testimonies.splice(index, 1);
+    const { error } = await supabase.from('testimonies').delete().eq('id', id);
+    
+    if (error) throw error;
     res.json({ message: 'Testimony deleted successfully' });
   } catch (error) {
     console.error('Error deleting testimony:', error);
@@ -102,15 +104,18 @@ router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, r
 });
 
 // Update testimony status
-router.patch('/:id/status', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = z.object({ status: z.enum(['Pending', 'Approved', 'Declined']) }).parse(req.body);
     const { id } = req.params;
-    const index = testimonies.findIndex(t => t.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Testimony not found' });
+    
+    const { error } = await supabase.from('testimonies').update({ status }).eq('id', id);
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Testimony not found' });
+      throw error;
     }
-    testimonies[index].status = status;
+
     res.json({ message: 'Testimony status updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {

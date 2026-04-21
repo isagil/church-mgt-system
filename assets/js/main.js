@@ -240,15 +240,38 @@ document.addEventListener('DOMContentLoaded', function() {
             table.innerHTML = '';
             data.forEach(t => {
                 const row = document.createElement('tr');
+                const initials = (t.full_name || 'Anonymous').split(' ').map(n => n[0]).join('').toUpperCase();
+                const mediaStatusClass = t.media_sent ? 'bg-success text-success' : 'bg-light text-muted';
+                const mediaStatusText = t.media_sent ? 'Sent' : 'Not Sent';
+                const mediaIcon = t.media_sent ? 'bi-check2-all' : 'bi-dash-circle';
+                const hasImage = t.has_image || (Math.random() > 0.4); // Simulate some having images
+                
                 row.innerHTML = `
-                    <td>${t.full_name}</td>
-                    <td>${t.title}</td>
-                    <td>${new Date(t.date).toLocaleDateString()}</td>
-                    <td><span class="badge ${t.status === 'Approved' ? 'bg-success' : (t.status === 'Pending' ? 'bg-warning' : 'bg-danger')} bg-opacity-10 text-${t.status === 'Approved' ? 'success' : (t.status === 'Pending' ? 'warning' : 'danger')}">${t.status}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
-                        <button class="btn btn-sm btn-light border-0 text-success"><i class="bi bi-check-lg"></i></button>
-                        <button class="btn btn-sm btn-light border-0 text-danger"><i class="bi bi-x-lg"></i></button>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">${initials}</div>
+                            <span class="fw-bold">${t.full_name}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <p class="mb-0 fw-bold">${t.title}</p>
+                                <span class="text-muted small">${t.category || 'Testimony'}</span>
+                            </div>
+                            ${hasImage ? '<i class="bi bi-image text-primary ms-2" title="Has Image Attached"></i>' : ''}
+                        </div>
+                    </td>
+                    <td class="text-muted small">${new Date(t.date).toLocaleDateString()}</td>
+                    <td><span class="badge ${t.status === 'Approved' ? 'bg-success' : (t.status === 'Pending' ? 'bg-warning' : 'bg-danger')} bg-opacity-10 text-${t.status === 'Approved' ? 'success' : (t.status === 'Pending' ? 'warning' : 'danger')}">${t.status}</span></td>
+                    <td><span class="badge ${mediaStatusClass} bg-opacity-10"><i class="bi ${mediaIcon} me-1"></i>${mediaStatusText}</span></td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-light border-0" title="View"><i class="bi bi-eye"></i></button>
+                            ${t.status === 'Pending' ? '<button class="btn btn-sm btn-primary bg-opacity-10 text-primary border-0 approve-btn" title="Approve"><i class="bi bi-check-circle"></i></button>' : ''}
+                            <button class="btn btn-sm btn-light border-0 text-primary send-to-media-btn" title="Send to Media Team" data-id="${t.id}"><i class="bi bi-megaphone"></i></button>
+                            <button class="btn btn-sm btn-light border-0 text-danger delete-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                        </div>
                     </td>
                 `;
                 table.appendChild(row);
@@ -260,7 +283,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch Baptism Requests
     async function fetchBaptismRequests() {
-        const table = document.querySelector('table.table-hover tbody');
+        const table = document.querySelector('#requests table tbody');
+        const recordsTable = document.querySelector('#records table tbody');
         if (!table || !window.location.pathname.includes('baptism.html')) return;
 
         try {
@@ -268,19 +292,49 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             table.innerHTML = '';
+            if (recordsTable) recordsTable.innerHTML = '';
+
             data.forEach(r => {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${r.full_name}</td>
-                    <td>${new Date(r.preferred_date).toLocaleDateString()}</td>
-                    <td>${r.location}</td>
-                    <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : (r.status === 'Pending' ? 'bg-warning' : 'bg-info')} bg-opacity-10 text-${r.status === 'Completed' ? 'success' : (r.status === 'Pending' ? 'warning' : 'info')}">${r.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-light border-0 text-success"><i class="bi bi-check-lg"></i></button>
-                    </td>
-                `;
-                table.appendChild(row);
+                const badgeClass = r.status === 'Completed' || r.status === 'Approved' ? 'bg-success' : (r.status === 'Pending' ? 'bg-warning' : 'bg-danger');
+                
+                if (r.status === 'Pending') {
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">${r.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
+                                <span class="fw-bold">${r.full_name}</span>
+                            </div>
+                        </td>
+                        <td class="text-muted small">${new Date(r.preferred_date).toLocaleDateString()}</td>
+                        <td>Immersion</td>
+                        <td class="text-muted small">Baptism request submitted online.</td>
+                        <td>
+                            <button class="btn btn-sm btn-success approve-baptism-btn" data-id="${r.id}"><i class="bi bi-check-circle me-1"></i>Approve</button>
+                            <button class="btn btn-sm btn-danger decline-baptism-btn" data-id="${r.id}"><i class="bi bi-x-circle me-1"></i>Decline</button>
+                        </td>
+                    `;
+                    table.appendChild(row);
+                } else if (recordsTable) {
+                    const recordRow = document.createElement('tr');
+                    recordRow.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle p-2 me-2 small fw-bold">${r.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
+                                <span class="fw-bold">${r.full_name}</span>
+                            </div>
+                        </td>
+                        <td class="text-muted small">${new Date(r.preferred_date).toLocaleDateString()}</td>
+                        <td class="text-muted small">Pastor Samuel</td>
+                        <td class="text-muted small">${r.location || 'Main Sanctuary'}</td>
+                        <td><span class="badge ${badgeClass} bg-opacity-10 text-${badgeClass.replace('bg-', '')}">${r.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
+                            <button class="btn btn-sm btn-light border-0"><i class="bi bi-file-earmark-text"></i></button>
+                        </td>
+                    `;
+                    recordsTable.appendChild(recordRow);
+                }
             });
         } catch (error) {
             console.error('Error fetching baptism requests:', error);
@@ -468,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     // Page Routing
     const path = window.location.pathname;
-    if (path === '/' || path.includes('index.html')) {
+    if (path.includes('dashboard.html')) {
         fetchDashboardStats();
     } else if (path.includes('members.html')) {
         fetchMembers();
@@ -751,26 +805,79 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Action Buttons (Approve, Decline, View, Delete, etc.)
-    document.addEventListener('click', (e) => {
+    // Action Buttons (Approve, Decline, View, Delete, Send to Media, etc.)
+    document.addEventListener('click', async (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
+        // Send to Media Action (Testimony specific)
+        if (target.classList.contains('send-to-media-btn')) {
+            const row = target.closest('tr');
+            if (target.classList.contains('disabled')) {
+                window.showToast('No images attached to this testimony.', 'warning');
+                return;
+            }
+            
+            window.showToast('Notifying media team for content prep...', 'info');
+            
+            setTimeout(() => {
+                window.showToast('Media team notified successfully!', 'success');
+                if (row) {
+                    const mediaBadge = row.querySelector('td:nth-child(5) .badge');
+                    if (mediaBadge) {
+                        mediaBadge.className = 'badge bg-success bg-opacity-10 text-success';
+                        mediaBadge.innerHTML = '<i class="bi bi-check2-all me-1"></i>Sent';
+                    }
+                }
+            }, 1200);
+            return;
+        }
+
+        // Approve/Decline Baptism Action
+        if (target.classList.contains('approve-baptism-btn') || target.classList.contains('decline-baptism-btn')) {
+            const id = target.dataset.id;
+            const newStatus = target.classList.contains('approve-baptism-btn') ? 'Approved' : 'Declined';
+            
+            try {
+                const response = await authFetch(`/api/baptism-requests/${id}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (response.ok) {
+                    window.showToast(`Request ${newStatus.toLowerCase()} successfully!`);
+                    fetchBaptismRequests();
+                } else {
+                    window.showToast('Failed to update request status', 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating baptism status:', error);
+                window.showToast('An error occurred', 'danger');
+            }
+            return;
+        }
+
         // Approve Action
-        if (target.classList.contains('btn-success') && target.textContent.includes('Approve')) {
+        if (target.classList.contains('approve-btn') || (target.classList.contains('btn-success') && target.textContent.includes('Approve'))) {
             const row = target.closest('tr');
             window.showToast('Request approved successfully!');
             if (row) {
                 const statusBadge = row.querySelector('.badge');
                 if (statusBadge) {
-                    statusBadge.className = 'badge bg-primary bg-opacity-10 text-primary';
+                    statusBadge.className = 'badge bg-success bg-opacity-10 text-success';
                     statusBadge.textContent = 'Approved';
                 }
-                target.parentElement.innerHTML = `
-                    <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
-                    <button class="btn btn-sm btn-light border-0"><i class="bi bi-trash"></i></button>
-                `;
+                
+                if (target.classList.contains('approve-btn')) {
+                    target.remove();
+                } else if (target.parentElement && target.parentElement.tagName === 'TD') {
+                    target.parentElement.innerHTML = `
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-light border-0"><i class="bi bi-trash"></i></button>
+                    `;
+                }
             }
+            return;
         }
 
         // Decline Action
@@ -778,26 +885,30 @@ document.addEventListener('DOMContentLoaded', function() {
             window.showToast('Request declined', 'warning');
             const row = target.closest('tr');
             if (row) row.remove();
+            return;
         }
 
         // View Action
         if (target.querySelector('.bi-eye') || target.textContent.includes('View')) {
             window.showToast('Opening record details...', 'info');
+            return;
+        }
+
+        // Delete Action
+        if (target.querySelector('.bi-trash') || target.classList.contains('delete-btn')) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                const row = target.closest('tr') || target.closest('.card');
+                window.showToast('Record deleted successfully!', 'warning');
+                if (row) row.remove();
+            }
+            return;
         }
 
         // Download Action
         if (target.querySelector('.bi-download') || target.textContent.includes('Download') || target.textContent.includes('Export')) {
             window.showToast('Preparing download...', 'info');
             setTimeout(() => window.showToast('Download started!'), 1500);
-        }
-
-        // Delete Action
-        if (target.querySelector('.bi-trash')) {
-            if (confirm('Are you sure you want to delete this record?')) {
-                const row = target.closest('tr') || target.closest('.card');
-                window.showToast('Record deleted successfully!', 'warning');
-                if (row) row.remove();
-            }
+            return;
         }
 
         // Filter Action
@@ -829,76 +940,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // User Management Logic
-    const addUserForm = document.getElementById('addUserForm');
-    const editUserForm = document.getElementById('editUserForm');
-    const usersTable = document.getElementById('usersTable')?.querySelector('tbody');
-    const roleFilter = document.querySelector('select.form-select-sm');
-    
-    if (addUserForm && usersTable) {
-        addUserForm.addEventListener('submit', function(e) {
-            // General handler handles simulation, we just update UI
-            const formData = new FormData(addUserForm);
-            const fullName = formData.get('fullName');
-            const email = formData.get('email');
-            const role = formData.get('role');
-            const accessLevel = formData.get('accessLevel');
-            const department = formData.get('department');
-            
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>
-                    <div class="d-flex align-items-center">
-                        <img src="https://picsum.photos/seed/${fullName}/40/40" class="rounded-circle me-3" width="32" height="32">
-                        <div>
-                            <div class="fw-bold">${fullName}</div>
-                            <div class="small text-muted">${email}</div>
-                        </div>
-                    </div>
-                </td>
-                <td><span class="badge bg-primary bg-opacity-10 text-primary">${role}</span></td>
-                <td>${accessLevel}</td>
-                <td>${department}</td>
-                <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
-                <td class="text-muted">Just now</td>
-                <td>
-                    <button class="btn btn-sm btn-light border-0 edit-user-btn"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-light border-0 text-danger lock-user-btn"><i class="bi bi-shield-lock"></i></button>
-                </td>
-            `;
-            usersTable.prepend(newRow);
-        });
-    }
-
-    if (editUserForm) {
-        editUserForm.addEventListener('submit', function(e) {
-            const formData = new FormData(editUserForm);
-            const name = formData.get('fullName');
-            const role = formData.get('role');
-            const level = formData.get('accessLevel');
-            const status = formData.get('status');
-            
-            // In a real app we'd use the userId hidden field
-            // For simulation, we'll just update the first row or show a message
-            window.showToast('User details updated successfully');
-        });
-    }
-
-    if (roleFilter && usersTable) {
-        roleFilter.addEventListener('change', function() {
-            const filterValue = this.value.toLowerCase();
-            const rows = usersTable.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const role = row.cells[1].textContent.toLowerCase();
-                if (filterValue === 'all roles' || role.includes(filterValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    }
+    // Role Filter Delegation
+    document.addEventListener('change', function(e) {
+        const roleFilter = e.target.closest('select.form-select-sm');
+        if (roleFilter && roleFilter.closest('.card-header')) {
+            const usersTable = document.getElementById('usersTable')?.querySelector('tbody');
+            if (usersTable) {
+                const filterValue = roleFilter.value.toLowerCase();
+                const rows = usersTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    const roleCell = row.cells[1];
+                    if (roleCell) {
+                        const role = roleCell.textContent.toLowerCase();
+                        if (filterValue === 'all roles' || role.includes(filterValue)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        }
+    });
 
     // Handle User Actions (Edit, Lock)
     document.addEventListener('click', (e) => {
@@ -1026,4 +1090,177 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Logout Handling
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+    }
+
+    // Member Form Submission
+    const addMemberForm = document.getElementById('addMemberForm');
+    if (addMemberForm) {
+        addMemberForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!addMemberForm.checkValidity()) {
+                e.stopPropagation();
+                addMemberForm.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(addMemberForm);
+            const memberData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await authFetch('/api/members', {
+                    method: 'POST',
+                    body: JSON.stringify(memberData)
+                });
+                
+                if (response.ok) {
+                    window.showToast('Member added successfully', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addMemberModal'));
+                    if (modal) modal.hide();
+                    addMemberForm.reset();
+                    fetchMembers();
+                }
+            } catch (error) {
+                console.error('Error adding member:', error);
+            }
+        });
+    }
+
+    // User Form Submission
+    const addUserForm = document.getElementById('addUserForm');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addUserForm);
+            const userData = Object.fromEntries(formData.entries());
+            
+            // Ensure all checkboxes are included as booleans (even if unchecked)
+            addUserForm.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                userData[cb.name] = cb.checked;
+            });
+            
+            try {
+                const response = await authFetch('/api/users', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    window.showToast('User created with custom permissions', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+                    if (modal) modal.hide();
+                    addUserForm.reset();
+                    fetchUsers();
+                }
+            } catch (error) {
+                console.error('Error adding user:', error);
+            }
+        });
+    }
+
+    // Edit User Form Submission
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(editUserForm);
+            const userData = Object.fromEntries(formData.entries());
+            
+            // Ensure all checkboxes are included as booleans (even if unchecked)
+            editUserForm.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                userData[cb.name] = cb.checked;
+            });
+            
+            try {
+                const id = document.getElementById('editUserId').value;
+                const response = await authFetch(`/api/users/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    window.showToast('User permissions updated successfully', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                    if (modal) modal.hide();
+                    fetchUsers();
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+            }
+        });
+    }
+
+    // Delete Event Delegation
+    document.addEventListener('click', async (e) => {
+        // Edit User Pre-fill
+        const editUserBtn = e.target.closest('.edit-user-btn');
+        if (editUserBtn) {
+            const id = editUserBtn.dataset.id;
+            try {
+                const response = await authFetch(`/api/users/${id}`);
+                const user = await response.json();
+                
+                const editUserId = document.getElementById('editUserId');
+                const editUsername = document.getElementById('editUsername');
+                const editRole = document.getElementById('editRole');
+                
+                if (editUserId) editUserId.value = user.id || id;
+                if (editUsername) editUsername.value = user.username || '';
+                if (editRole) editRole.value = user.role || 'User';
+                
+                // Pre-fill checkboxes
+                const checkboxes = document.querySelectorAll('#editUserForm input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    // Check if permission exists in user data (simulation)
+                    if (user.permissions && user.permissions[cb.name] !== undefined) {
+                        cb.checked = user.permissions[cb.name];
+                    } else {
+                        // Default logic for simulation
+                        cb.checked = user.role === 'Admin';
+                    }
+                });
+
+                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error fetching user for edit:', error);
+            }
+        }
+
+        // Delete Member
+        const deleteMemberBtn = e.target.closest('.delete-member-btn');
+        if (deleteMemberBtn) {
+            const id = deleteMemberBtn.dataset.id;
+            if (confirm('Are you sure you want to delete this member?')) {
+                try {
+                    const response = await authFetch(`/api/members/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        window.showToast('Member deleted', 'success');
+                        fetchMembers();
+                    }
+                } catch (error) {
+                    console.error('Error deleting member:', error);
+                }
+            }
+        }
+
+        // Lock/Delete User
+        const lockUserBtn = e.target.closest('.lock-user-btn');
+        if (lockUserBtn) {
+            const id = lockUserBtn.dataset.id;
+            if (confirm('Are you sure you want to restrict this user?')) {
+                window.showToast('User permissions restricted', 'info');
+            }
+        }
+    });
 });

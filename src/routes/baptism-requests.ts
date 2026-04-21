@@ -1,6 +1,5 @@
 import express from 'express';
-import { baptismRequests, getNextId } from '../mockData.js';
-import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -10,16 +9,19 @@ const baptismRequestSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(1),
   preferred_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  status: z.enum(['Pending', 'Approved', 'Completed']).default('Pending'),
+  status: z.enum(['Pending', 'Approved', 'Completed', 'Declined']).default('Pending'),
 });
 
 // Get all baptism requests
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const sortedRequests = [...baptismRequests].sort((a, b) => 
-      new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
-    );
-    res.json(sortedRequests);
+    const { data, error } = await supabase
+      .from('baptism_requests')
+      .select('*')
+      .order('submitted_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     console.error('Error fetching baptism requests:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -27,14 +29,16 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get a single baptism request
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const request = baptismRequests.find(r => r.id === parseInt(id as string));
-    if (!request) {
-      return res.status(404).json({ error: 'Baptism request not found' });
+    const { data, error } = await supabase.from('baptism_requests').select('*').eq('id', id).single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Baptism request not found' });
+      throw error;
     }
-    res.json(request);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching baptism request:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -45,13 +49,13 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/submit', async (req, res) => {
   try {
     const data = baptismRequestSchema.parse(req.body);
-    const newRequest = {
-      id: getNextId('baptismRequests'),
+    const { data: newRequest, error } = await supabase.from('baptism_requests').insert({
       ...data,
       location: 'Main Sanctuary', // Default location
       submitted_at: new Date().toISOString()
-    };
-    baptismRequests.push(newRequest);
+    }).select().single();
+    
+    if (error) throw error;
     res.status(201).json(newRequest);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -63,19 +67,19 @@ router.post('/submit', async (req, res) => {
 });
 
 // Update a baptism request
-router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const data = baptismRequestSchema.parse(req.body);
-    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Baptism request not found' });
+    
+    const { data: updated, error } = await supabase.from('baptism_requests').update(data).eq('id', id).select().single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Baptism request not found' });
+      throw error;
     }
-    baptismRequests[index] = {
-      ...baptismRequests[index],
-      ...data
-    };
-    res.json(baptismRequests[index]);
+    
+    res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.issues });
@@ -86,14 +90,12 @@ router.put('/:id', authenticateToken, authorizeRole(['Admin', 'Pastor']), async 
 });
 
 // Delete a baptism request
-router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Baptism request not found' });
-    }
-    baptismRequests.splice(index, 1);
+    const { error } = await supabase.from('baptism_requests').delete().eq('id', id);
+    
+    if (error) throw error;
     res.json({ message: 'Baptism request deleted successfully' });
   } catch (error) {
     console.error('Error deleting baptism request:', error);
@@ -102,15 +104,18 @@ router.delete('/:id', authenticateToken, authorizeRole(['Admin']), async (req, r
 });
 
 // Update baptism request status
-router.patch('/:id/status', authenticateToken, authorizeRole(['Admin', 'Pastor']), async (req, res) => {
+router.patch('/:id/status', async (req, res) => {
   try {
-    const { status } = z.object({ status: z.enum(['Pending', 'Approved', 'Completed']) }).parse(req.body);
+    const { status } = z.object({ status: z.enum(['Pending', 'Approved', 'Completed', 'Declined']) }).parse(req.body);
     const { id } = req.params;
-    const index = baptismRequests.findIndex(r => r.id === parseInt(id as string));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Baptism request not found' });
+    
+    const { error } = await supabase.from('baptism_requests').update({ status }).eq('id', id);
+    
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Baptism request not found' });
+      throw error;
     }
-    baptismRequests[index].status = status;
+
     res.json({ message: 'Baptism request status updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {
